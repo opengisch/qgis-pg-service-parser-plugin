@@ -3,7 +3,7 @@ github_organization_slug: opengisch
 project_slug: qgis-pg-service-parser-plugin
 
 transifex_coordinator: geoninja
-transifex_resource: swiss_locator
+transifex_resource: qgis_pg_service_parser_plugin
 translation_languages:
   - fr
   - de
