@@ -1,0 +1,9 @@
+plugin_path: pg_service_parser
+github_organization_slug: opengisch
+project_slug: qgis-pg-service-parser-plugin
+
+transifex_coordinator: geoninja
+transifex_resource: swiss_locator
+translation_languages:
+  - fr
+  - de
