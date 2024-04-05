@@ -1,0 +1,17 @@
+[general]
+name=pg_service parser
+description=Copy or override PG service entries
+about=Copy or override PG service entries for connection to PostgreSQL databases
+version=0.0.1
+qgisMinimumVersion=3.00
+qgisMaximumVersion=3.99
+category=Database
+author=OPENGIS.CH
+email=german@opengis.ch
+tags=postgresql,connection,db,database,service
+homepage=https://github.com/opengisch/qgis-pg-service-parser-plugin
+tracker=https://github.com/opengisch/qgis-pg-service-parser-plugin/issues
+repository=https://github.com/opengisch/qgis-pg-service-parser-plugin
+icon=images/icon.png
+experimental=False
+deprecated=False
