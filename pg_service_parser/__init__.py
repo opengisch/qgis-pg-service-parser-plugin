@@ -1,5 +1,5 @@
-from .pg_service_parser_plugin import PGServiceParserPlugin
+from .pg_service_parser_plugin import PgServiceParserPlugin
 
 
 def classFactory(iface):
-    return PGServiceParserPlugin(iface)
+    return PgServiceParserPlugin(iface)

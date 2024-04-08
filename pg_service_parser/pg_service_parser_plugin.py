@@ -1,7 +1,9 @@
 from qgis.PyQt.QtWidgets import QAction
 
+from pg_service_parser.gui.dlg_pg_service import PgServiceDialog
 
-class PGServiceParserPlugin():
+
+class PgServiceParserPlugin():
     def __init__(self, iface):
         self.iface = iface
         self.action = None
@@ -17,3 +19,5 @@ class PGServiceParserPlugin():
 
     def run(self):
         print("Eureka!")
+        dlg = PgServiceDialog(self.iface.mainWindow())
+        dlg.exec_()
