@@ -40,7 +40,7 @@ jobs:
         run: qgis-plugin-ci push-translation ${{ secrets.TX_TOKEN }}
 
       - name: Package PyPI Packages
-        run: ./plugin/scripts/package-pip-packages.sh
+        run: ./scripts/package-pip-packages.sh
 
       - name: Package
         run: |
