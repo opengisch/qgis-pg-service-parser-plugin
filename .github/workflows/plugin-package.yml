@@ -47,11 +47,11 @@ jobs:
           VERSION=0.0.0
           qgis-plugin-ci -v package ${VERSION} \
             --allow-uncommitted-changes \
-            --asset-path plugin/pg_service_parser_dev/libs \
+            --asset-path pg_service_parser_dev/libs \
             --transifex-token "${{ secrets.TX_TOKEN }}"
 
       - uses: actions/upload-artifact@v4
         with:
           name: pg_service_parser_dev
-          path: plugin/pg_service_parser.0.0.0.zip
+          path: pg_service_parser.0.0.0.zip
           if-no-files-found: error
