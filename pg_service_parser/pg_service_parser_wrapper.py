@@ -1,7 +1,13 @@
+import os.path
+
 import pgserviceparser
 from typing import (List,
                     Optional)
 
+
+def conf_path() -> str:
+    path = pgserviceparser.conf_path()
+    return path if os.path.exists(path) else None
 
 def service_names(conf_file_path: Optional[str] = None) -> List[str]:
     return pgserviceparser.service_names(conf_file_path)

@@ -18,6 +18,5 @@ class PgServiceParserPlugin():
         del self.action
 
     def run(self):
-        print("Eureka!")
         dlg = PgServiceDialog(self.iface.mainWindow())
         dlg.exec_()
