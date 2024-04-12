@@ -1,15 +1,18 @@
-from qgis.PyQt.QtCore import (Qt,
-                              pyqtSlot)
-from qgis.PyQt.QtWidgets import (QDialog,
-                                 QSizePolicy)
 from qgis.gui import QgsMessageBar
+from qgis.PyQt.QtCore import Qt, pyqtSlot
+from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QSizePolicy
 
-from pg_service_parser.pg_service_parser_wrapper import (conf_path,
-                                                         copy_service_settings,
-                                                         service_names)
+from pg_service_parser.core.item_models import ServiceConfigModel
+from pg_service_parser.core.pg_service_parser_wrapper import (
+    conf_path,
+    copy_service_settings,
+    service_config,
+    service_names,
+    write_service_settings,
+)
 from pg_service_parser.utils import get_ui_class
 
-DIALOG_UI = get_ui_class('pg_service_dialog.ui')
+DIALOG_UI = get_ui_class("pg_service_dialog.ui")
 COPY_TAB_INDEX = 0
 EDIT_TAB_INDEX = 1
 
@@ -23,18 +26,24 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         conf_file_path = conf_path()
         if not conf_file_path:
             self.lblConfFile.setText("Config file not found!")
-            self.lblConfFile.setToolTip("Set your PGSERVICEFILE environment variable and reopen the dialog.")
+            self.lblConfFile.setToolTip(
+                "Set your PGSERVICEFILE environment variable and reopen the dialog."
+            )
             self.txtConfFile.setVisible(False)
             self.tabWidget.setEnabled(False)
             return
 
+        self.__edit_model = None
+
         self.txtConfFile.setText(conf_file_path)
         self.lblWarning.setVisible(False)
-        self.tabWidget.setTabEnabled(EDIT_TAB_INDEX, False)  # Not yet implemented
 
         self.radOverwrite.toggled.connect(self.__update_target_controls)
         self.btnCopyService.clicked.connect(self.__copy_service)
         self.cboSourceService.currentIndexChanged.connect(self.__source_service_changed)
+        self.tabWidget.currentChanged.connect(self.__current_tab_changed)
+        self.cboEditService.currentIndexChanged.connect(self.__edit_service_changed)
+        self.btnUpdateService.clicked.connect(self.__update_service_clicked)
 
         self.__initialize_copy_services()
         self.__update_target_controls(True)
@@ -72,6 +81,16 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboSourceService.addItems(service_names())
         self.cboSourceService.setCurrentText(current_text)
 
+    def __initialize_edit_services(self):
+        self.__edit_model = None
+        current_text = self.cboEditService.currentText()  # Remember latest currentText
+        self.cboEditService.blockSignals(True)  # Avoid triggering custom slot while clearing
+        self.cboEditService.clear()
+        self.cboEditService.blockSignals(False)
+        self.cboEditService.addItems(service_names())
+        self.cboEditService.setCurrentText(current_text)
+
+    @pyqtSlot()
     def __copy_service(self):
         # Validations
         if self.radCreate.isChecked():
@@ -79,14 +98,20 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 self.bar.pushInfo("PG service", "Enter a service name and try again.")
                 return
             elif self.txtNewService.text().strip() in service_names():
-                self.bar.pushWarning("PG service", "Service name already exists! Change it and try again.")
+                self.bar.pushWarning(
+                    "PG service", "Service name already exists! Change it and try again."
+                )
                 return
         elif self.radOverwrite.isChecked():
             if not self.cboTargetService.currentText():
                 self.bar.pushInfo("PG service", "Select a valid target service and try again.")
                 return
 
-        target_service = self.cboTargetService.currentText() if self.radOverwrite.isChecked() else self.txtNewService.text().strip()
+        target_service = (
+            self.cboTargetService.currentText()
+            if self.radOverwrite.isChecked()
+            else self.txtNewService.text().strip()
+        )
 
         if copy_service_settings(self.cboSourceService.currentText(), target_service):
             self.bar.pushSuccess("PG service", f"PG service copied to '{target_service}'!")
@@ -94,3 +119,49 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 self.__initialize_copy_services()  # Reflect the newly added service
         else:
             self.bar.pushWarning("PG service", "There was a problem copying the service!")
+
+    @pyqtSlot(int)
+    def __current_tab_changed(self, index):
+        if index == COPY_TAB_INDEX:
+            # self.__initialize_copy_services()
+            pass  # For now, services to be copied won't be altered in other tabs
+        elif index == EDIT_TAB_INDEX:
+            self.__initialize_edit_services()
+
+    @pyqtSlot(int)
+    def __edit_service_changed(self, index):
+        target_service = self.cboEditService.currentText()
+        if self.__edit_model and self.__edit_model.is_dirty():
+            if (
+                not QMessageBox.question(
+                    self,
+                    "Pending edits",
+                    "There are pending edits for service '{}'. Are you sure you want to discard them?".format(
+                        self.__edit_model.service_name()
+                    ),
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                )
+                == QMessageBox.Yes
+            ):
+
+                self.cboEditService.blockSignals(True)
+                self.cboEditService.setCurrentText(self.__edit_model.service_name())
+                self.cboEditService.blockSignals(False)
+                return
+
+        self.__edit_model = ServiceConfigModel(target_service, service_config(target_service))
+        self.tblServiceConfig.setModel(self.__edit_model)
+
+    @pyqtSlot()
+    def __update_service_clicked(self):
+        if self.__edit_model and self.__edit_model.is_dirty():
+            target_service = self.cboEditService.currentText()
+            res = write_service_settings(target_service, self.__edit_model.service_config())
+            if res:
+                self.bar.pushSuccess("PG service", f"PG service '{target_service}' updated!")
+                self.__edit_model.set_not_dirty()
+            else:
+                self.bar.pushWarning("PG service", "There was a problem updating the service!")
+        else:
+            self.bar.pushInfo("PG service", "Edit the service configuration and try again.")
