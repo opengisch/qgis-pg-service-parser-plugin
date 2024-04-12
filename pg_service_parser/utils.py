@@ -1,6 +1,6 @@
 import os
-from qgis.PyQt.uic import (loadUiType,
-                           loadUi)
+
+from qgis.PyQt.uic import loadUiType
 
 from pg_service_parser.config import DEFAULT_PG_SERVICE_PATH
 
@@ -16,14 +16,8 @@ def get_ui_class(ui_file):
 
 
 def get_ui_file_path(ui_file) -> str:
-    os.path.sep.join(ui_file.split('/'))
-    ui_file_path = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            'ui',
-            ui_file
-        )
-    )
+    os.path.sep.join(ui_file.split("/"))
+    ui_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "ui", ui_file))
 
     return ui_file_path
 

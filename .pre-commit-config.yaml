@@ -57,4 +57,3 @@ repos:
 ci:
   autofix_prs: true
   autoupdate_schedule: quarterly
-

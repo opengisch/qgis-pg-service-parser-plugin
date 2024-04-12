@@ -3,13 +3,13 @@ from qgis.PyQt.QtWidgets import QAction
 from pg_service_parser.gui.dlg_pg_service import PgServiceDialog
 
 
-class PgServiceParserPlugin():
+class PgServiceParserPlugin:
     def __init__(self, iface):
         self.iface = iface
         self.action = None
 
     def initGui(self):
-        self.action = QAction('Go!', self.iface.mainWindow())
+        self.action = QAction("Go!", self.iface.mainWindow())
         self.action.triggered.connect(self.run)
         self.iface.addToolBarIcon(self.action)
 
