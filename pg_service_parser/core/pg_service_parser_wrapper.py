@@ -1,13 +1,13 @@
 import os.path
+from typing import List, Optional
 
 import pgserviceparser
-from typing import (List,
-                    Optional)
 
 
 def conf_path() -> str:
     path = pgserviceparser.conf_path()
     return path if os.path.exists(path) else None
+
 
 def service_names(conf_file_path: Optional[str] = None) -> List[str]:
     return pgserviceparser.service_names(conf_file_path)
@@ -18,9 +18,9 @@ def service_config(service_name: str, conf_file_path: Optional[str] = None) -> d
 
 
 def write_service_settings(
-        service_name: str,
-        settings: dict,
-        conf_file_path: Optional[str] = None,
+    service_name: str,
+    settings: dict,
+    conf_file_path: Optional[str] = None,
 ) -> bool:
     """Returns true if it could write the settings to the file.
 
@@ -39,13 +39,15 @@ def write_service_settings(
     return False
 
 
-def create_service(service_name: str, settings: dict, conf_file_path: Optional[str] = None) -> bool:
+def create_service(
+    service_name: str, settings: dict, conf_file_path: Optional[str] = None
+) -> bool:
     config = pgserviceparser.full_config(conf_file_path)
     if service_name in config:
         return False
 
     config.add_section(service_name)
-    with open(conf_file_path or pgserviceparser.conf_path(), 'w') as f:
+    with open(conf_file_path or pgserviceparser.conf_path(), "w") as f:
         config.write(f)
 
     if service_name in config:
@@ -54,7 +56,9 @@ def create_service(service_name: str, settings: dict, conf_file_path: Optional[s
     return False
 
 
-def copy_service_settings(source_service_name: str, target_service_name: str, conf_file_path: Optional[str] = None) -> bool:
+def copy_service_settings(
+    source_service_name: str, target_service_name: str, conf_file_path: Optional[str] = None
+) -> bool:
     settings = pgserviceparser.service_config(source_service_name, conf_file_path)
 
     config = pgserviceparser.full_config(conf_file_path)
@@ -67,12 +71,17 @@ def copy_service_settings(source_service_name: str, target_service_name: str, co
     return res
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     assert service_names() == []
 
     # Add new service
-    _settings = {'host': 'localhost', 'port': '5432', 'user': 'postgres', 'password': 'secret',
-                 'dbname': 'qgis_test_db'}
+    _settings = {
+        "host": "localhost",
+        "port": "5432",
+        "user": "postgres",
+        "password": "secret",
+        "dbname": "qgis_test_db",
+    }
     assert create_service("qgis-test", _settings)
     assert service_names() == ["qgis-test"]
 
@@ -82,8 +91,13 @@ if __name__ == '__main__':
     assert service_config("qgis-demo") == _settings
 
     # Add new service
-    _settings = {'host': 'localhost', 'port': '5433', 'user': 'admin', 'password': 'secret',
-                 'dbname': 'qgis_test_db2'}
+    _settings = {
+        "host": "localhost",
+        "port": "5433",
+        "user": "admin",
+        "password": "secret",
+        "dbname": "qgis_test_db2",
+    }
     assert create_service("qgis-new-test", _settings)
     assert service_names() == ["qgis-test", "qgis-demo", "qgis-new-test"]
     assert service_config("qgis-new-test") == _settings
