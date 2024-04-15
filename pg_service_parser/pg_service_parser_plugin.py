@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
 from pg_service_parser.gui.dlg_pg_service import PgServiceDialog
@@ -9,7 +12,11 @@ class PgServiceParserPlugin:
         self.action = None
 
     def initGui(self):
-        self.action = QAction("Go!", self.iface.mainWindow())
+        self.action = QAction(
+            QIcon(str(Path(__file__).parent / "images" / "logo.png")),
+            "PG service parser",
+            self.iface.mainWindow(),
+        )
         self.action.triggered.connect(self.run)
         self.iface.addToolBarIcon(self.action)
 

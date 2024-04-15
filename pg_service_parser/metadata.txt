@@ -13,6 +13,6 @@ tags=postgresql,connection,db,database,service
 homepage=https://github.com/opengisch/qgis-pg-service-parser-plugin
 tracker=https://github.com/opengisch/qgis-pg-service-parser-plugin/issues
 repository=https://github.com/opengisch/qgis-pg-service-parser-plugin
-icon=images/icon.png
+icon=images/logo.png
 experimental=False
 deprecated=False
