@@ -39,8 +39,8 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         run: qgis-plugin-ci push-translation ${{ secrets.TX_TOKEN }}
 
-      - name: Package PyPI Packages
-        run: ./scripts/package-pip-packages.sh
+      - name: Install pgservice parser
+        run: pip install -r requirements.txt -t pg_service_parser/libs
 
       - name: Package
         run: |
