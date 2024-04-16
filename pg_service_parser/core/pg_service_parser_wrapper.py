@@ -1,12 +1,12 @@
-import os.path
+from pathlib import Path
 from typing import List, Optional
 
 from pg_service_parser.libs import pgserviceparser
 
 
-def conf_path() -> str:
+def conf_path() -> Path:
     path = pgserviceparser.conf_path()
-    return path if os.path.exists(path) else None
+    return path if path.exists() else None
 
 
 def service_names(conf_file_path: Optional[str] = None) -> List[str]:
@@ -17,26 +17,12 @@ def service_config(service_name: str, conf_file_path: Optional[str] = None) -> d
     return pgserviceparser.service_config(service_name, conf_file_path)
 
 
-def write_service_settings(
+def write_service(
     service_name: str,
     settings: dict,
     conf_file_path: Optional[str] = None,
-) -> bool:
-    """Returns true if it could write the settings to the file.
-
-    :param str service_name: service's name
-    :param dict settings: Settings dict defining the service
-    :param str conf_file_path: path to the pg_service.conf. If None the `conf_path()` is used, defaults to None
-
-    :return bool: True if the setting has been successfully written
-    """
-    config = pgserviceparser.full_config(conf_file_path)
-    if service_name in config:
-        config[service_name] = settings.copy()
-        with open(conf_file_path or pgserviceparser.conf_path(), "w") as configfile:
-            config.write(configfile)
-            return True
-    return False
+):
+    pgserviceparser.write_service(service_name, settings, conf_file_path)
 
 
 def create_service(
@@ -51,24 +37,22 @@ def create_service(
         config.write(f)
 
     if service_name in config:
-        return write_service_settings(service_name, settings)
+        pgserviceparser.write_service(service_name, settings)
+        return True
 
     return False
 
 
 def copy_service_settings(
     source_service_name: str, target_service_name: str, conf_file_path: Optional[str] = None
-) -> bool:
+):
     settings = pgserviceparser.service_config(source_service_name, conf_file_path)
-
     config = pgserviceparser.full_config(conf_file_path)
-    res = False
-    if target_service_name in config:
-        res = write_service_settings(target_service_name, settings, conf_file_path)
-    else:
-        res = create_service(target_service_name, settings, conf_file_path)
 
-    return res
+    if target_service_name in config:
+        pgserviceparser.write_service(target_service_name, settings, conf_file_path)
+    else:
+        create_service(target_service_name, settings, conf_file_path)
 
 
 if __name__ == "__main__":
@@ -86,7 +70,7 @@ if __name__ == "__main__":
     assert service_names() == ["qgis-test"]
 
     # Clone existing service
-    assert copy_service_settings("qgis-test", "qgis-demo")
+    copy_service_settings("qgis-test", "qgis-demo")
     assert service_names() == ["qgis-test", "qgis-demo"]
     assert service_config("qgis-demo") == _settings
 

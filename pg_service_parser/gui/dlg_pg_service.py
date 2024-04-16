@@ -8,7 +8,7 @@ from pg_service_parser.core.pg_service_parser_wrapper import (
     copy_service_settings,
     service_config,
     service_names,
-    write_service_settings,
+    write_service,
 )
 from pg_service_parser.utils import get_ui_class
 
@@ -35,7 +35,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         self.__edit_model = None
 
-        self.txtConfFile.setText(conf_file_path)
+        self.txtConfFile.setText(str(conf_file_path))
         self.lblWarning.setVisible(False)
 
         self.radOverwrite.toggled.connect(self.__update_target_controls)
@@ -99,7 +99,10 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 return
             elif self.txtNewService.text().strip() in service_names():
                 self.bar.pushWarning(
-                    "PG service", "Service name already exists! Change it and try again."
+                    "PG service",
+                    "Service name '{}' already exists! Change it and try again.".format(
+                        self.txtNewService.text().strip()
+                    ),
                 )
                 return
         elif self.radOverwrite.isChecked():
@@ -113,12 +116,10 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             else self.txtNewService.text().strip()
         )
 
-        if copy_service_settings(self.cboSourceService.currentText(), target_service):
-            self.bar.pushSuccess("PG service", f"PG service copied to '{target_service}'!")
-            if self.radCreate.isChecked():
-                self.__initialize_copy_services()  # Reflect the newly added service
-        else:
-            self.bar.pushWarning("PG service", "There was a problem copying the service!")
+        copy_service_settings(self.cboSourceService.currentText(), target_service)
+        self.bar.pushSuccess("PG service", f"PG service copied to '{target_service}'!")
+        if self.radCreate.isChecked():
+            self.__initialize_copy_services()  # Reflect the newly added service
 
     @pyqtSlot(int)
     def __current_tab_changed(self, index):
@@ -157,11 +158,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     def __update_service_clicked(self):
         if self.__edit_model and self.__edit_model.is_dirty():
             target_service = self.cboEditService.currentText()
-            res = write_service_settings(target_service, self.__edit_model.service_config())
-            if res:
-                self.bar.pushSuccess("PG service", f"PG service '{target_service}' updated!")
-                self.__edit_model.set_not_dirty()
-            else:
-                self.bar.pushWarning("PG service", "There was a problem updating the service!")
+            write_service(target_service, self.__edit_model.service_config())
+            self.bar.pushSuccess("PG service", f"PG service '{target_service}' updated!")
+            self.__edit_model.set_not_dirty()
         else:
             self.bar.pushInfo("PG service", "Edit the service configuration and try again.")
