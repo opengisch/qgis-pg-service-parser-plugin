@@ -1,7 +1,7 @@
 import os.path
 from typing import List, Optional
 
-import pgserviceparser
+from pg_service_parser.libs import pgserviceparser
 
 
 def conf_path() -> str:
