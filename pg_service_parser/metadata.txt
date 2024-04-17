@@ -1,7 +1,7 @@
 [general]
 name=PG service parser
-description=Copy or override PG service entries
-about=Copy or override PG service entries for PostgreSQL connections
+description=View, edit or copy PG service entries
+about=View, edit or copy PG service entries for PostgreSQL connections
 version=dev
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
