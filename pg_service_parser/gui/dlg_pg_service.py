@@ -13,8 +13,8 @@ from pg_service_parser.core.pg_service_parser_wrapper import (
 from pg_service_parser.utils import get_ui_class
 
 DIALOG_UI = get_ui_class("pg_service_dialog.ui")
-COPY_TAB_INDEX = 0
-EDIT_TAB_INDEX = 1
+EDIT_TAB_INDEX = 0
+COPY_TAB_INDEX = 1
 
 
 class PgServiceDialog(QDialog, DIALOG_UI):
@@ -45,6 +45,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboEditService.currentIndexChanged.connect(self.__edit_service_changed)
         self.btnUpdateService.clicked.connect(self.__update_service_clicked)
 
+        self.__initialize_edit_services()
         self.__initialize_copy_services()
         self.__update_target_controls(True)
 
