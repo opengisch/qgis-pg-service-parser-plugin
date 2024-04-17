@@ -79,5 +79,3 @@ jobs:
             --osgeo-username ${{ secrets.OSGEO_PLUGIN_USERNAME }} \
             --osgeo-password ${{ secrets.OSGEO_PLUGIN_PASSWORD }} \
             --transifex-token "${{ secrets.TX_TOKEN }}"
-
-
