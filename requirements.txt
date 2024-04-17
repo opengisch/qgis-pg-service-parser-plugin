@@ -1,1 +1,1 @@
-pgserviceparser@git+https://github.com/opengisch/pgserviceparser.git@main
+pgserviceparser==2.0.0
