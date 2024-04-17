@@ -45,7 +45,16 @@ jobs:
       - name: Package
         run: |
           VERSION=0.0.0
-          qgis-plugin-ci -v package ${VERSION} \
+          qgis-plugin-ci package ${VERSION} \
+            --allow-uncommitted-changes \
+            --asset-path pg_service_parser/libs \
+            --transifex-token "${{ secrets.TX_TOKEN }}"
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION=${{ github.ref_name }}
+          qgis-plugin-ci release ${VERSION} \
             --allow-uncommitted-changes \
             --asset-path pg_service_parser/libs \
             --transifex-token "${{ secrets.TX_TOKEN }}"
