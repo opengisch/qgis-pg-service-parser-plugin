@@ -57,6 +57,9 @@ jobs:
           qgis-plugin-ci release ${VERSION} \
             --allow-uncommitted-changes \
             --asset-path pg_service_parser/libs \
+            --github-token ${{ secrets.GITHUB_TOKEN }} \
+            --osgeo-username ${{ secrets.OSGEO_USER }} \
+            --osgeo-password ${{ secrets.OSGEO_PASSWORD }} \
             --transifex-token "${{ secrets.TX_TOKEN }}"
 
       - uses: actions/upload-artifact@v4
