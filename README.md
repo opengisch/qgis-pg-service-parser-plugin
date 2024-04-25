@@ -2,7 +2,7 @@
 
 # PG service parser plugin
 
-<img src="https://raw.githubusercontent.com/opengisch/qgis-pg-service-parser-plugin/main/pg_service_parser/images/logo.png" alt="Logo" width="200px" align="left"/>
+<img src="https://raw.githubusercontent.com/opengisch/qgis-pg-service-parser-plugin/main/pg_service_parser/images/logo.png" alt="Logo" width="200px"/>
 
 
 QGIS v3 plugin to view, edit or copy PG service (i.e., `pg_service.conf`) entries for PostgreSQL connections.
