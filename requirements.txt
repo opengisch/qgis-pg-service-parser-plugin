@@ -1,1 +1,1 @@
-pgserviceparser==2.0.0
+pgserviceparser>=2.0.1
