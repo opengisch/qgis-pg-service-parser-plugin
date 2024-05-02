@@ -19,10 +19,11 @@ class PgServiceParserPlugin:
         )
         self.action.triggered.connect(self.run)
         self.iface.addToolBarIcon(self.action)
+        self.iface.addPluginToDatabaseMenu("PG service parser", self.action)
 
     def unload(self):
         self.iface.removeToolBarIcon(self.action)
-        del self.action
+        self.iface.removePluginDatabaseMenu("PG service parser", self.action)
 
     def run(self):
         dlg = PgServiceDialog(self.iface.mainWindow())
