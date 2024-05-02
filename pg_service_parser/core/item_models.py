@@ -1,5 +1,5 @@
 from qgis.PyQt.QtCore import QAbstractTableModel, Qt, pyqtSignal
-from qgis.PyQt.QtGui import QFont
+from qgis.PyQt.QtGui import QColorConstants, QFont
 
 
 class ServiceConfigModel(QAbstractTableModel):
@@ -12,6 +12,7 @@ class ServiceConfigModel(QAbstractTableModel):
         super().__init__()
         self.__service_name = service_name
         self.__model_data = service_config
+        self.__original_data = service_config.copy()
         self.__dirty = False
 
     def rowCount(self, parent):
@@ -32,10 +33,21 @@ class ServiceConfigModel(QAbstractTableModel):
                 return self.__model_data[key]
         elif role == Qt.EditRole and index.column() == self.VALUE_COL:
             return self.__model_data[key]
-        elif role == Qt.FontRole and index.column() == self.KEY_COL:
-            font = QFont()
-            font.setBold(True)
-            return font
+        elif role == Qt.FontRole:
+            if index.column() == self.KEY_COL:
+                font = QFont()
+                font.setBold(True)
+                return font
+            elif (
+                index.column() == self.VALUE_COL
+                and self.__model_data[key] != self.__original_data[key]
+            ):
+                font = QFont()
+                font.setItalic(True)
+                return font
+        elif role == Qt.ForegroundRole and index.column() == self.VALUE_COL:
+            if self.__model_data[key] != self.__original_data[key]:
+                return QColorConstants.Red
 
         return None
 
@@ -46,8 +58,15 @@ class ServiceConfigModel(QAbstractTableModel):
         key = list(self.__model_data.keys())[index.row()]
         if value != self.__model_data[key]:
             self.__model_data[key] = value
-            self.__dirty = True
-            self.is_dirty_changed.emit(True)
+
+            if value != self.__original_data[key]:
+                self.__dirty = True
+                self.is_dirty_changed.emit(True)
+            else:
+                if self.__model_data == self.__original_data:
+                    self.__dirty = False
+                    self.is_dirty_changed.emit(False)
+
             return True
 
         return False
@@ -72,5 +91,7 @@ class ServiceConfigModel(QAbstractTableModel):
         return self.__service_name
 
     def set_not_dirty(self):
+        # Data saved in the provider
+        self.__original_data = self.__model_data.copy()
         self.__dirty = False
         self.is_dirty_changed.emit(False)
