@@ -154,6 +154,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         self.__edit_model = ServiceConfigModel(target_service, service_config(target_service))
         self.tblServiceConfig.setModel(self.__edit_model)
+        self.__edit_model.is_dirty_changed.connect(self.btnUpdateService.setEnabled)
+        self.btnUpdateService.setDisabled(True)
 
     @pyqtSlot()
     def __update_service_clicked(self):
