@@ -1,10 +1,12 @@
-from qgis.PyQt.QtCore import QAbstractTableModel, Qt
+from qgis.PyQt.QtCore import QAbstractTableModel, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QFont
 
 
 class ServiceConfigModel(QAbstractTableModel):
     KEY_COL = 0
     VALUE_COL = 1
+
+    is_dirty_changed = pyqtSignal(bool)  # Whether the model gets dirty or not
 
     def __init__(self, service_name, service_config):
         super().__init__()
@@ -45,6 +47,7 @@ class ServiceConfigModel(QAbstractTableModel):
         if value != self.__model_data[key]:
             self.__model_data[key] = value
             self.__dirty = True
+            self.is_dirty_changed.emit(True)
             return True
 
         return False
@@ -70,3 +73,4 @@ class ServiceConfigModel(QAbstractTableModel):
 
     def set_not_dirty(self):
         self.__dirty = False
+        self.is_dirty_changed.emit(False)
