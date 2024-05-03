@@ -47,7 +47,7 @@ class ServiceConfigModel(QAbstractTableModel):
                 return font
         elif role == Qt.ForegroundRole and index.column() == self.VALUE_COL:
             if self.__model_data[key] != self.__original_data[key]:
-                return QColorConstants.Red
+                return QColorConstants.DarkGreen
 
         return None
 
