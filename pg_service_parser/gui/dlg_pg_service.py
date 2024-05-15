@@ -1,3 +1,4 @@
+from qgis.core import QgsApplication
 from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import Qt, pyqtSlot
 from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QSizePolicy
@@ -35,6 +36,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         self.__edit_model = None
 
+        self.btnAddSetting.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
+        self.btnRemoveSetting.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.txtConfFile.setText(str(conf_file_path))
         self.lblWarning.setVisible(False)
 
@@ -43,6 +46,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboSourceService.currentIndexChanged.connect(self.__source_service_changed)
         self.tabWidget.currentChanged.connect(self.__current_tab_changed)
         self.cboEditService.currentIndexChanged.connect(self.__edit_service_changed)
+        self.btnAddSetting.clicked.connect(self.__add_setting_clicked)
+        self.btnRemoveSetting.clicked.connect(self.__remove_setting_clicked)
         self.btnUpdateService.clicked.connect(self.__update_service_clicked)
 
         self.__initialize_edit_services()
@@ -156,6 +161,25 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.tblServiceConfig.setModel(self.__edit_model)
         self.__edit_model.is_dirty_changed.connect(self.btnUpdateService.setEnabled)
         self.btnUpdateService.setDisabled(True)
+
+    def __add_setting_clicked(self):
+        self.__edit_model.add_setting({"my_key": "my_value"})
+
+    def __remove_setting_clicked(self):
+        selected_indexes = self.tblServiceConfig.selectedIndexes()
+        if selected_indexes:
+            setting_key = self.__edit_model.index_to_setting_key(selected_indexes[0])
+            if (
+                QMessageBox.question(
+                    self,
+                    "Remove service setting",
+                    f"Are you sure you want to remove the '{setting_key}' setting?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                )
+                == QMessageBox.Yes
+            ):
+                self.__edit_model.remove_setting(selected_indexes[0])
 
     @pyqtSlot()
     def __update_service_clicked(self):
