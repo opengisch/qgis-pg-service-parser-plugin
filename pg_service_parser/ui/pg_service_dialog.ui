@@ -113,7 +113,7 @@
        <item row="1" column="1">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <widget class="QPushButton" name="btnAddSetting">
+          <widget class="QPushButton" name="btnAddSettings">
            <property name="maximumSize">
             <size>
              <width>25</width>
@@ -121,7 +121,7 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>Add setting to current service</string>
+            <string>Add settings to current service</string>
            </property>
            <property name="text">
             <string/>

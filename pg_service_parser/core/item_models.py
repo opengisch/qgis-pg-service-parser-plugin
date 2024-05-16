@@ -24,9 +24,9 @@ class ServiceConfigModel(QAbstractTableModel):
     def index_to_setting_key(self, index):
         return list(self.__model_data.keys())[index.row()]
 
-    def add_setting(self, setting: dict):
-        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-        self.__model_data.update(setting)
+    def add_settings(self, settings: dict):
+        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount() + len(settings) - 1)
+        self.__model_data.update(settings)
         self.__set_dirty_status(True)
         self.endInsertRows()
 
@@ -113,6 +113,9 @@ class ServiceConfigModel(QAbstractTableModel):
         self.__dirty = status
         self.is_dirty_changed.emit(status)
 
+    def current_setting_keys(self) -> list[str]:
+        return list(self.__model_data.keys())
+
     def service_config(self):
         return self.__model_data.copy()
 
@@ -123,3 +126,11 @@ class ServiceConfigModel(QAbstractTableModel):
         # Data saved in the provider
         self.__original_data = self.__model_data.copy()
         self.__set_dirty_status(False)
+
+    def invalid_settings(self):
+        """
+        Validation for service entries.
+
+        :return: List of invalid settings.
+        """
+        return [k for k, v in self.__model_data.items() if v.strip() == ""]
