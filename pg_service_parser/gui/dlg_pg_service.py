@@ -3,6 +3,7 @@ from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import Qt, pyqtSlot
 from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QSizePolicy
 
+from pg_service_parser.conf.service_settings import SERVICE_SETTINGS
 from pg_service_parser.core.item_models import ServiceConfigModel
 from pg_service_parser.core.pg_service_parser_wrapper import (
     conf_path,
@@ -11,6 +12,7 @@ from pg_service_parser.core.pg_service_parser_wrapper import (
     service_names,
     write_service,
 )
+from pg_service_parser.gui.dlg_service_settings import ServiceSettingsDialog
 from pg_service_parser.utils import get_ui_class
 
 DIALOG_UI = get_ui_class("pg_service_dialog.ui")
@@ -36,7 +38,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         self.__edit_model = None
 
-        self.btnAddSetting.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
+        self.btnAddSettings.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
         self.btnRemoveSetting.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.txtConfFile.setText(str(conf_file_path))
         self.lblWarning.setVisible(False)
@@ -46,7 +48,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboSourceService.currentIndexChanged.connect(self.__source_service_changed)
         self.tabWidget.currentChanged.connect(self.__current_tab_changed)
         self.cboEditService.currentIndexChanged.connect(self.__edit_service_changed)
-        self.btnAddSetting.clicked.connect(self.__add_setting_clicked)
+        self.btnAddSettings.clicked.connect(self.__add_settings_clicked)
         self.btnRemoveSetting.clicked.connect(self.__remove_setting_clicked)
         self.btnUpdateService.clicked.connect(self.__update_service_clicked)
 
@@ -162,9 +164,16 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.__edit_model.is_dirty_changed.connect(self.btnUpdateService.setEnabled)
         self.btnUpdateService.setDisabled(True)
 
-    def __add_setting_clicked(self):
-        self.__edit_model.add_setting({"my_key": "my_value"})
+    @pyqtSlot()
+    def __add_settings_clicked(self):
+        dlg = ServiceSettingsDialog(self, self.__edit_model.current_setting_keys())
+        dlg.exec_()
 
+        if dlg.settings_to_add:
+            settings = {k: v for k, v in SERVICE_SETTINGS.items() if k in dlg.settings_to_add}
+            self.__edit_model.add_settings(settings)
+
+    @pyqtSlot()
     def __remove_setting_clicked(self):
         selected_indexes = self.tblServiceConfig.selectedIndexes()
         if selected_indexes:
@@ -184,6 +193,16 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     @pyqtSlot()
     def __update_service_clicked(self):
         if self.__edit_model and self.__edit_model.is_dirty():
+            invalid = self.__edit_model.invalid_settings()
+            if invalid:
+                self.bar.pushWarning(
+                    "PG service",
+                    "Settings '{}' have invalid values. Adjust them and try again.".format(
+                        "', '".join(invalid)
+                    ),
+                )
+                return
+
             target_service = self.cboEditService.currentText()
             write_service(target_service, self.__edit_model.service_config())
             self.bar.pushSuccess("PG service", f"PG service '{target_service}' updated!")
