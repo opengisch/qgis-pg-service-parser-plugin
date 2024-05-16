@@ -1,16 +1,20 @@
 from pathlib import Path
 from typing import List, Optional
 
+from pg_service_parser.conf.service_settings import SETTINGS_TEMPLATE
 from pg_service_parser.libs import pgserviceparser
 
 
 def conf_path() -> Path:
-    path = pgserviceparser.conf_path()
-    return path if path.exists() else None
+    return pgserviceparser.conf_path()
 
 
 def service_names(conf_file_path: Optional[str] = None) -> List[str]:
     return pgserviceparser.service_names(conf_file_path)
+
+
+def add_new_service(service_name: str, conf_file_path: Optional[str] = None) -> bool:
+    return create_service(service_name, SETTINGS_TEMPLATE, conf_file_path)
 
 
 def service_config(service_name: str, conf_file_path: Optional[str] = None) -> dict:
@@ -37,7 +41,8 @@ def create_service(
         config.write(f)
 
     if service_name in config:
-        pgserviceparser.write_service(service_name, settings)
+        if settings:
+            pgserviceparser.write_service(service_name, settings)
         return True
 
     return False
