@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from qgis.core import QgsApplication
 from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import Qt, pyqtSlot
@@ -6,12 +8,14 @@ from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QSizePolicy
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS
 from pg_service_parser.core.item_models import ServiceConfigModel
 from pg_service_parser.core.pg_service_parser_wrapper import (
+    add_new_service,
     conf_path,
     copy_service_settings,
     service_config,
     service_names,
     write_service,
 )
+from pg_service_parser.gui.dlg_service_name import ServiceNameDialog
 from pg_service_parser.gui.dlg_service_settings import ServiceSettingsDialog
 from pg_service_parser.utils import get_ui_class
 
@@ -27,11 +31,19 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.setupUi(self)
 
         conf_file_path = conf_path()
-        if not conf_file_path:
+        self.__initialize_dialog(conf_file_path)
+
+    def __initialize_dialog(self, conf_file_path):
+        if not conf_file_path.exists():
+            self.btnCreateServiceFile.setIcon(QgsApplication.getThemeIcon("/mActionNewPage.svg"))
+            self.btnCreateServiceFile.clicked.connect(self.__create_file_clicked)
             self.lblConfFile.setText("Config file not found!")
-            self.lblConfFile.setToolTip(
-                "Set your PGSERVICEFILE environment variable and reopen the dialog."
+            not_found_tooltip = (
+                "Create a config file at a default location or\n"
+                "set your PGSERVICEFILE environment variable and reopen the dialog."
             )
+            self.lblConfFile.setToolTip(not_found_tooltip)
+            self.lblWarning.setToolTip(not_found_tooltip)
             self.txtConfFile.setVisible(False)
             self.tabWidget.setEnabled(False)
             return
@@ -42,6 +54,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.btnRemoveSetting.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.txtConfFile.setText(str(conf_file_path))
         self.lblWarning.setVisible(False)
+        self.lblConfFile.setText("Config file path found at ")
+        self.lblConfFile.setToolTip("")
+        self.txtConfFile.setVisible(True)
+        self.tabWidget.setEnabled(True)
+        self.btnCreateServiceFile.setVisible(False)
 
         self.radOverwrite.toggled.connect(self.__update_target_controls)
         self.btnCopyService.clicked.connect(self.__copy_service)
@@ -59,6 +76,16 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.bar = QgsMessageBar()
         self.bar.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.layout().insertWidget(0, self.bar)
+
+    @pyqtSlot()
+    def __create_file_clicked(self):
+        dlg = ServiceNameDialog(self)
+        dlg.exec_()
+        if dlg.result() == QDialog.Accepted:
+            path = conf_path()
+            Path.touch(path)
+            add_new_service(dlg.service_name)
+            self.__initialize_dialog(path)
 
     @pyqtSlot(bool)
     def __update_target_controls(self, checked):

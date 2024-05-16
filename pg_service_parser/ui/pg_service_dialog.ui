@@ -67,6 +67,13 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="btnCreateServiceFile">
+       <property name="text">
+        <string>Create file at default location</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
