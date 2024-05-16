@@ -13,11 +13,11 @@ This plugin is distributed under the [GNU GPL v3 license](https://github.com/ope
 
 ### pg_service.conf location
 
-If your `pg_service.conf` file is located at `/home/YOUR_USER/.pg_service.conf` (on Linux) or at `%HOMEPATH%\.pg_service.conf` (on Windows), then you are done! The plugin will read your file directly.
+If your `pg_service.conf` file is located at `/home/YOUR_USER/.pg_service.conf` (on Linux) or at `%APPDATA%\postgresql\.pg_service.conf` (on Windows), then you are done! The plugin will read your file directly.
 
 If that's not the case, i.e., if your `pg_service.conf` file is not in the aforementioned locations, you can still set the `PGSERVICEFILE` environment variable pointing to your `pg_service.conf` file path before using the plugin.
 
-
+Clients like QGIS will directly read your `pg_service.conf` file from any of these locations and you'll be able to use any service from this file in the `New Connection` dialog (see [QGIS docs](https://docs.qgis.org/latest/en/docs/user_manual/managing_data_source/opening_data.html#creating-a-stored-connection)).
 
 ### Edit PG service entries
 
