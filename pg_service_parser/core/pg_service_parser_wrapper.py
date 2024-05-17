@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import List, Optional
 
-from pg_service_parser.conf.service_settings import SETTINGS_TEMPLATE
 from pg_service_parser.libs import pgserviceparser
 
 
@@ -14,7 +13,7 @@ def service_names(conf_file_path: Optional[str] = None) -> List[str]:
 
 
 def add_new_service(service_name: str, conf_file_path: Optional[str] = None) -> bool:
-    return create_service(service_name, SETTINGS_TEMPLATE, conf_file_path)
+    return create_service(service_name, {}, conf_file_path)
 
 
 def service_config(service_name: str, conf_file_path: Optional[str] = None) -> dict:
