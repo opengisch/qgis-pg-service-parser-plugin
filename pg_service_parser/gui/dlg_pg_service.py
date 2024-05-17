@@ -5,7 +5,7 @@ from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import Qt, pyqtSlot
 from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QSizePolicy
 
-from pg_service_parser.conf.service_settings import SERVICE_SETTINGS
+from pg_service_parser.conf.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
 from pg_service_parser.core.item_models import ServiceConfigModel
 from pg_service_parser.core.pg_service_parser_wrapper import (
     add_new_service,
@@ -29,6 +29,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
         self.setupUi(self)
+
+        # Flag to handle initialization of new files
+        self.__new_empty_file = False
 
         conf_file_path = conf_path()
         self.__initialize_dialog(conf_file_path)
@@ -85,6 +88,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             path = conf_path()
             Path.touch(path)
             add_new_service(dlg.service_name)
+
+            # Set flag to get a template after some initialization
+            self.__new_empty_file = True
             self.__initialize_dialog(path)
 
     @pyqtSlot(bool)
@@ -190,6 +196,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.tblServiceConfig.setModel(self.__edit_model)
         self.__edit_model.is_dirty_changed.connect(self.btnUpdateService.setEnabled)
         self.btnUpdateService.setDisabled(True)
+
+        if self.__new_empty_file:
+            # Add service template
+            self.__edit_model.add_settings(SETTINGS_TEMPLATE)
+            self.__new_empty_file = False
 
     @pyqtSlot()
     def __add_settings_clicked(self):
