@@ -33,11 +33,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         # Flag to handle initialization of new files
         self.__new_empty_file = False
 
-        conf_file_path = conf_path()
-        self.__initialize_dialog(conf_file_path)
+        self.__conf_file_path = conf_path()
+        self.__initialize_dialog()
 
-    def __initialize_dialog(self, conf_file_path):
-        if not conf_file_path.exists():
+    def __initialize_dialog(self):
+        if not self.__conf_file_path.exists():
             self.btnCreateServiceFile.setIcon(QgsApplication.getThemeIcon("/mActionNewPage.svg"))
             self.btnCreateServiceFile.clicked.connect(self.__create_file_clicked)
             self.lblConfFile.setText("Config file not found!")
@@ -55,7 +55,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         self.btnAddSettings.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
         self.btnRemoveSetting.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
-        self.txtConfFile.setText(str(conf_file_path))
+        self.txtConfFile.setText(str(self.__conf_file_path))
         self.lblWarning.setVisible(False)
         self.lblConfFile.setText("Config file path found at ")
         self.lblConfFile.setToolTip("")
@@ -85,13 +85,12 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         dlg = ServiceNameDialog(self)
         dlg.exec_()
         if dlg.result() == QDialog.Accepted:
-            path = conf_path()
-            Path.touch(path)
+            Path.touch(self.__conf_file_path)
             add_new_service(dlg.service_name)
 
             # Set flag to get a template after some initialization
             self.__new_empty_file = True
-            self.__initialize_dialog(path)
+            self.__initialize_dialog()
 
     @pyqtSlot(bool)
     def __update_target_controls(self, checked):
@@ -106,7 +105,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         current_text = current_text if self.cboSourceService.currentText() != current_text else ""
 
         self.cboTargetService.clear()
-        self.cboTargetService.addItems([""] + service_names())
+        self.cboTargetService.addItems([""] + service_names(self.__conf_file_path))
 
         model = self.cboTargetService.model()
         item = model.item(index + 1)  # Account for the first (empty) item
@@ -119,7 +118,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboSourceService.blockSignals(True)  # Avoid triggering custom slot while clearing
         self.cboSourceService.clear()
         self.cboSourceService.blockSignals(False)
-        self.cboSourceService.addItems(service_names())
+        self.cboSourceService.addItems(service_names(self.__conf_file_path))
         self.cboSourceService.setCurrentText(current_text)
 
     def __initialize_edit_services(self):
@@ -128,7 +127,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboEditService.blockSignals(True)  # Avoid triggering custom slot while clearing
         self.cboEditService.clear()
         self.cboEditService.blockSignals(False)
-        self.cboEditService.addItems(service_names())
+        self.cboEditService.addItems(service_names(self.__conf_file_path))
         self.cboEditService.setCurrentText(current_text)
 
     @pyqtSlot()
@@ -138,7 +137,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             if not self.txtNewService.text().strip():
                 self.bar.pushInfo("PG service", "Enter a service name and try again.")
                 return
-            elif self.txtNewService.text().strip() in service_names():
+            elif self.txtNewService.text().strip() in service_names(self.__conf_file_path):
                 self.bar.pushWarning(
                     "PG service",
                     "Service name '{}' already exists! Change it and try again.".format(
@@ -157,7 +156,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             else self.txtNewService.text().strip()
         )
 
-        copy_service_settings(self.cboSourceService.currentText(), target_service)
+        copy_service_settings(
+            self.cboSourceService.currentText(), target_service, self.__conf_file_path
+        )
         self.bar.pushSuccess("PG service", f"PG service copied to '{target_service}'!")
         if self.radCreate.isChecked():
             self.__initialize_copy_services()  # Reflect the newly added service
@@ -192,7 +193,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 self.cboEditService.blockSignals(False)
                 return
 
-        self.__edit_model = ServiceConfigModel(target_service, service_config(target_service))
+        self.__edit_model = ServiceConfigModel(
+            target_service, service_config(target_service, self.__conf_file_path)
+        )
         self.tblServiceConfig.setModel(self.__edit_model)
         self.__edit_model.is_dirty_changed.connect(self.btnUpdateService.setEnabled)
         self.btnUpdateService.setDisabled(True)
@@ -242,7 +245,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 return
 
             target_service = self.cboEditService.currentText()
-            write_service(target_service, self.__edit_model.service_config())
+            write_service(
+                target_service, self.__edit_model.service_config(), self.__conf_file_path
+            )
             self.bar.pushSuccess("PG service", f"PG service '{target_service}' updated!")
             self.__edit_model.set_not_dirty()
         else:

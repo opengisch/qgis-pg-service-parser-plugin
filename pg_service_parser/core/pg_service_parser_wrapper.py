@@ -8,28 +8,28 @@ def conf_path() -> Path:
     return pgserviceparser.conf_path()
 
 
-def service_names(conf_file_path: Optional[str] = None) -> List[str]:
+def service_names(conf_file_path: Optional[Path] = None) -> List[str]:
     return pgserviceparser.service_names(conf_file_path)
 
 
-def add_new_service(service_name: str, conf_file_path: Optional[str] = None) -> bool:
+def add_new_service(service_name: str, conf_file_path: Optional[Path] = None) -> bool:
     return create_service(service_name, {}, conf_file_path)
 
 
-def service_config(service_name: str, conf_file_path: Optional[str] = None) -> dict:
+def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> dict:
     return pgserviceparser.service_config(service_name, conf_file_path)
 
 
 def write_service(
     service_name: str,
     settings: dict,
-    conf_file_path: Optional[str] = None,
+    conf_file_path: Optional[Path] = None,
 ):
     pgserviceparser.write_service(service_name, settings, conf_file_path)
 
 
 def create_service(
-    service_name: str, settings: dict, conf_file_path: Optional[str] = None
+    service_name: str, settings: dict, conf_file_path: Optional[Path] = None
 ) -> bool:
     config = pgserviceparser.full_config(conf_file_path)
     if service_name in config:
@@ -40,15 +40,14 @@ def create_service(
         config.write(f)
 
     if service_name in config:
-        if settings:
-            pgserviceparser.write_service(service_name, settings)
+        pgserviceparser.write_service(service_name, settings, conf_file_path)
         return True
 
     return False
 
 
 def copy_service_settings(
-    source_service_name: str, target_service_name: str, conf_file_path: Optional[str] = None
+    source_service_name: str, target_service_name: str, conf_file_path: Optional[Path] = None
 ):
     settings = pgserviceparser.service_config(source_service_name, conf_file_path)
     config = pgserviceparser.full_config(conf_file_path)
