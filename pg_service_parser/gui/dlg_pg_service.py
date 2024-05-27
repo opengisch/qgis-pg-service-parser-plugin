@@ -77,14 +77,14 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.__update_target_controls(True)
 
         self.bar = QgsMessageBar()
-        self.bar.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.bar.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         self.layout().insertWidget(0, self.bar)
 
     @pyqtSlot()
     def __create_file_clicked(self):
         dlg = ServiceNameDialog(self)
-        dlg.exec_()
-        if dlg.result() == QDialog.Accepted:
+        dlg.exec()
+        if dlg.result() == QDialog.DialogCode.Accepted:
             Path.touch(self.__conf_file_path)
             add_new_service(dlg.service_name)
 
@@ -109,7 +109,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         model = self.cboTargetService.model()
         item = model.item(index + 1)  # Account for the first (empty) item
-        item.setFlags(item.flags() & ~Qt.ItemIsEnabled)  # Disable mirror item
+        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)  # Disable mirror item
 
         self.cboTargetService.setCurrentText(current_text)
 
@@ -182,10 +182,10 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                     "There are pending edits for service '{}'. Are you sure you want to discard them?".format(
                         self.__edit_model.service_name()
                     ),
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
                 )
-                == QMessageBox.Yes
+                == QMessageBox.StandardButton.Yes
             ):
 
                 self.cboEditService.blockSignals(True)
@@ -208,7 +208,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     @pyqtSlot()
     def __add_settings_clicked(self):
         dlg = ServiceSettingsDialog(self, self.__edit_model.current_setting_keys())
-        dlg.exec_()
+        dlg.exec()
 
         if dlg.settings_to_add:
             settings = {k: v for k, v in SERVICE_SETTINGS.items() if k in dlg.settings_to_add}
@@ -224,10 +224,10 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                     self,
                     "Remove service setting",
                     f"Are you sure you want to remove the '{setting_key}' setting?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
                 )
-                == QMessageBox.Yes
+                == QMessageBox.StandardButton.Yes
             ):
                 self.__edit_model.remove_setting(selected_indexes[0])
 
