@@ -27,4 +27,4 @@ class PgServiceParserPlugin:
 
     def run(self):
         dlg = PgServiceDialog(self.iface.mainWindow())
-        dlg.exec_()
+        dlg.exec()

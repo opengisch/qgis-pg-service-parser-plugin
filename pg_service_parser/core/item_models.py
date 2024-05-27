@@ -45,19 +45,19 @@ class ServiceConfigModel(QAbstractTableModel):
         if self.__model_data == self.__original_data:
             self.__set_dirty_status(False)
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if not index.isValid():
             return None
 
         key = list(self.__model_data.keys())[index.row()]
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             if index.column() == self.KEY_COL:
                 return key
             elif index.column() == self.VALUE_COL:
                 return self.__model_data[key]
-        elif role == Qt.EditRole and index.column() == self.VALUE_COL:
+        elif role == Qt.ItemDataRole.EditRole and index.column() == self.VALUE_COL:
             return self.__model_data[key]
-        elif role == Qt.FontRole:
+        elif role == Qt.ItemDataRole.FontRole:
             if index.column() == self.KEY_COL:
                 font = QFont()
                 font.setBold(True)
@@ -69,7 +69,7 @@ class ServiceConfigModel(QAbstractTableModel):
                 font = QFont()
                 font.setItalic(True)
                 return font
-        elif role == Qt.ForegroundRole and index.column() == self.VALUE_COL:
+        elif role == Qt.ItemDataRole.ForegroundRole and index.column() == self.VALUE_COL:
             if (
                 key not in self.__original_data
                 or self.__model_data[key] != self.__original_data[key]
@@ -78,7 +78,7 @@ class ServiceConfigModel(QAbstractTableModel):
 
         return None
 
-    def setData(self, index, value, role=Qt.EditRole) -> bool:
+    def setData(self, index, value, role=Qt.ItemDataRole.EditRole) -> bool:
         if not index.isValid():
             return False
 
@@ -98,13 +98,13 @@ class ServiceConfigModel(QAbstractTableModel):
 
     def flags(self, idx):
         if not idx.isValid():
-            return ~Qt.ItemIsSelectable & ~Qt.ItemIsEnabled
+            return ~Qt.ItemFlag.ItemIsSelectable & ~Qt.ItemFlag.ItemIsEnabled
 
-        _flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
+        _flags = Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled
         if idx.column() == self.KEY_COL:
             return _flags
         elif idx.column() == self.VALUE_COL:
-            return _flags | Qt.ItemIsEditable
+            return _flags | Qt.ItemFlag.ItemIsEditable
 
     def is_dirty(self):
         return self.__dirty
