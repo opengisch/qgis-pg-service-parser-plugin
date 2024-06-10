@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>dlgServiceName</class>
- <widget class="QDialog" name="dlgServiceName">
+ <class>dlgNewName</class>
+ <widget class="QDialog" name="dlgNewName">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,23 +11,23 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Service name</string>
+   <string>New name</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Enter a service name</string>
+      <string>Enter a new name</string>
      </property>
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QLineEdit" name="txtServiceName">
+    <widget class="QLineEdit" name="txtNewName">
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
      <property name="placeholderText">
-      <string>e.g., my-service</string>
+      <string>e.g., new name</string>
      </property>
      <property name="clearButtonEnabled">
       <bool>true</bool>
@@ -66,7 +66,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>dlgServiceName</receiver>
+   <receiver>dlgNewName</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -82,7 +82,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>dlgServiceName</receiver>
+   <receiver>dlgNewName</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

@@ -6,6 +6,7 @@ SERVICE_SETTINGS = {
     "dbname": "test",
     "user": "",
     "password": "",
+    "sslmode": "",
     "passfile": "",
 }
 
