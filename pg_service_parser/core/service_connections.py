@@ -18,30 +18,30 @@ def get_connections(service: str) -> dict[str, QgsAbstractDatabaseProviderConnec
     return res
 
 
-def create_connection(service: str, name: str) -> None:
+def create_connection(service: str, connection_name: str) -> None:
     config = {}
     uri = f"service='{service}'"
     provider = QgsProviderRegistry.instance().providerMetadata("postgres")
     conn = provider.createConnection(uri, config)
-    provider.saveConnection(conn, name)
+    provider.saveConnection(conn, connection_name)
     # conn.store(name)
 
 
-def remove_connection(conn_name: str) -> None:
+def remove_connection(connection_name: str) -> None:
     provider = QgsProviderRegistry.instance().providerMetadata("postgres")
-    provider.deleteConnection(conn_name)
+    provider.deleteConnection(connection_name)
 
 
-def edit_connection(conn_name: str) -> None:
+def edit_connection(connection_name: str) -> None:
     provider = QgsProviderRegistry.instance().providerMetadata("postgres")
 
-    if conn_name in provider.dbConnections():
+    if connection_name in provider.dbConnections():
         pg = QgsGui.sourceSelectProviderRegistry().providerByName("postgres")
         w = pg.createDataSourceWidget()
 
         settings = QSettings()
         settings.value("PostgreSQL/connections/selected")
-        settings.setValue("PostgreSQL/connections/selected", conn_name)
+        settings.setValue("PostgreSQL/connections/selected", connection_name)
 
         w.refresh()  # To reflect the newly selected connection
         w.btnEdit_clicked()

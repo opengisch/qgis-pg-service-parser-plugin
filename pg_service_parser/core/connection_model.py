@@ -42,17 +42,20 @@ class ServiceConnectionModel(QAbstractTableModel):
                 font = QFont()
                 font.setItalic(True)
                 return font
+        elif role == Qt.ItemDataRole.ToolTipRole:
+            if index.column() == self.VALUE_COL:
+                return self.__model_data[key].uri()
 
         return None
 
-    def headerData(
-        self, section: int, orientation: Qt.Orientation, role: Qt.DisplayRole = Qt.DisplayRole
-    ):
-        if orientation == Qt.Horizontal:
+    def headerData(self, section, orientation, role):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             if section == self.KEY_COL:
                 return "Connection name"
             elif section == self.VALUE_COL:
-                return "Configuration"
+                return "URI"
+
+        return QAbstractTableModel.headerData(self, section, orientation, role)
 
     def flags(self, idx):
         if not idx.isValid():
