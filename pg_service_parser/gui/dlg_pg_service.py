@@ -211,7 +211,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         dlg.exec()
 
         if dlg.settings_to_add:
-            settings = {k: v for k, v in SERVICE_SETTINGS.items() if k in dlg.settings_to_add}
+            settings = {
+                k: v["default"] for k, v in SERVICE_SETTINGS.items() if k in dlg.settings_to_add
+            }
             self.__edit_model.add_settings(settings)
 
     @pyqtSlot()
