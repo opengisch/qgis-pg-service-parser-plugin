@@ -1,5 +1,5 @@
-from qgis.PyQt.QtCore import pyqtSlot
-from qgis.PyQt.QtWidgets import QDialog
+from qgis.PyQt.QtCore import Qt, pyqtSlot
+from qgis.PyQt.QtWidgets import QDialog, QDialogButtonBox, QListWidgetItem
 
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS
 from pg_service_parser.utils import get_ui_class
@@ -9,15 +9,30 @@ DIALOG_UI = get_ui_class("service_settings_dialog.ui")
 
 class ServiceSettingsDialog(QDialog, DIALOG_UI):
 
-    def __init__(self, parent, settings_to_hide: list[str]):
+    def __init__(self, parent, used_settings: list[str]):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
+        self.lstSettings.itemSelectionChanged.connect(self.__selection_changed)
         self.buttonBox.accepted.connect(self.__accepted)
 
-        settings = set(SERVICE_SETTINGS.keys()) - set(settings_to_hide)
-        self.lstSettings.addItems(settings)
+        self.__selection_changed()  # Initialize button status
+
+        # Load data
+        for setting in SERVICE_SETTINGS.keys():
+            item = QListWidgetItem(setting)
+            if setting in used_settings:
+                item.setFlags(item.flags() & ~Qt.ItemIsSelectable & ~Qt.ItemIsEnabled)
+
+            self.lstSettings.addItem(item)
+
         self.settings_to_add = []
+
+    @pyqtSlot()
+    def __selection_changed(self):
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(
+            bool(self.lstSettings.selectedItems())
+        )
 
     @pyqtSlot()
     def __accepted(self):
