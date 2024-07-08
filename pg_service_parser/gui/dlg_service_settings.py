@@ -19,10 +19,12 @@ class ServiceSettingsDialog(QDialog, DIALOG_UI):
         self.__selection_changed()  # Initialize button status
 
         # Load data
-        for setting in SERVICE_SETTINGS.keys():
+        for setting, data in SERVICE_SETTINGS.items():
             item = QListWidgetItem(setting)
             if setting in used_settings:
                 item.setFlags(item.flags() & ~Qt.ItemIsSelectable & ~Qt.ItemIsEnabled)
+            if data.get("description", None):
+                item.setToolTip(data["description"])
 
             self.lstSettings.addItem(item)
 

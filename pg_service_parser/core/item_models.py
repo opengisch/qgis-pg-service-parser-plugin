@@ -1,6 +1,8 @@
 from qgis.PyQt.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QColorConstants, QFont
 
+from pg_service_parser.conf.service_settings import SERVICE_SETTINGS
+
 
 class ServiceConfigModel(QAbstractTableModel):
     KEY_COL = 0
@@ -13,6 +15,7 @@ class ServiceConfigModel(QAbstractTableModel):
         self.__service_name = service_name
         self.__model_data = service_config
         self.__original_data = service_config.copy()
+        self.__settings_data = SERVICE_SETTINGS  # Read-only dict with further info about settings
         self.__dirty = False
 
     def rowCount(self, parent=QModelIndex()):
@@ -24,7 +27,7 @@ class ServiceConfigModel(QAbstractTableModel):
     def index_to_setting_key(self, index):
         return list(self.__model_data.keys())[index.row()]
 
-    def add_settings(self, settings: dict):
+    def add_settings(self, settings: dict[str, str]):
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount() + len(settings) - 1)
         self.__model_data.update(settings)
         self.__set_dirty_status(True)
@@ -55,6 +58,13 @@ class ServiceConfigModel(QAbstractTableModel):
                 return key
             elif index.column() == self.VALUE_COL:
                 return self.__model_data[key]
+        elif role == Qt.ItemDataRole.ToolTipRole:
+            if index.column() == self.KEY_COL:
+                return (
+                    self.__settings_data[key].get("description", None)
+                    if key in self.__settings_data
+                    else None
+                )
         elif role == Qt.ItemDataRole.EditRole and index.column() == self.VALUE_COL:
             return self.__model_data[key]
         elif role == Qt.ItemDataRole.FontRole:
