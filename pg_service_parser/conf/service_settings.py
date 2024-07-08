@@ -7,6 +7,7 @@ SERVICE_SETTINGS = {
     "user": "",
     "password": "",
     "passfile": "",
+    "sslmode": "",
 }
 
 # Settings to initialize new files
