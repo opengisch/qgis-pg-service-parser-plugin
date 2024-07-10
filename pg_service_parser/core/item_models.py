@@ -1,12 +1,15 @@
 from qgis.PyQt.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QColorConstants, QFont
 
+from pg_service_parser.conf.enums import SslModeEnum
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS
 
 
 class ServiceConfigModel(QAbstractTableModel):
     KEY_COL = 0
     VALUE_COL = 1
+
+    SSLMODE_KEY = "sslmode"
 
     is_dirty_changed = pyqtSignal(bool)  # Whether the model gets dirty or not
 
@@ -85,6 +88,9 @@ class ServiceConfigModel(QAbstractTableModel):
                 or self.__model_data[key] != self.__original_data[key]
             ):
                 return QColorConstants.DarkGreen
+        elif role == Qt.ItemDataRole.UserRole:
+            if index.column() == self.VALUE_COL and key == self.SSLMODE_KEY:
+                return {key: [e.value for e in SslModeEnum]}
 
         return None
 
@@ -144,3 +150,11 @@ class ServiceConfigModel(QAbstractTableModel):
         :return: List of invalid settings.
         """
         return [k for k, v in self.__model_data.items() if v.strip() == ""]
+
+    @staticmethod
+    def is_sslmode_edit_cell(index):
+        return (
+            index.column() == ServiceConfigModel.VALUE_COL
+            and isinstance(index.data(Qt.ItemDataRole.UserRole), dict)
+            and ServiceConfigModel.SSLMODE_KEY in index.data(Qt.ItemDataRole.UserRole)
+        )
