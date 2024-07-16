@@ -17,7 +17,6 @@ from pg_service_parser.core.pg_service_parser_wrapper import (
 )
 from pg_service_parser.gui.dlg_service_name import ServiceNameDialog
 from pg_service_parser.gui.dlg_service_settings import ServiceSettingsDialog
-from pg_service_parser.gui.item_delegates import ServiceConfigDelegate
 from pg_service_parser.utils import get_ui_class
 
 DIALOG_UI = get_ui_class("pg_service_dialog.ui")
