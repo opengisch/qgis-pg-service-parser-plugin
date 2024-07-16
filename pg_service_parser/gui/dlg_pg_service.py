@@ -2,7 +2,7 @@ from pathlib import Path
 
 from qgis.core import QgsApplication
 from qgis.gui import QgsMessageBar
-from qgis.PyQt.QtCore import Qt, pyqtSlot
+from qgis.PyQt.QtCore import QItemSelection, Qt, pyqtSlot
 from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QSizePolicy
 
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
@@ -63,6 +63,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.txtConfFile.setVisible(True)
         self.tabWidget.setEnabled(True)
         self.btnCreateServiceFile.setVisible(False)
+        self.btnRemoveSetting.setEnabled(False)
 
         self.radOverwrite.toggled.connect(self.__update_target_controls)
         self.btnCopyService.clicked.connect(self.__copy_service)
@@ -76,6 +77,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.__initialize_edit_services()
         self.__initialize_copy_services()
         self.__update_target_controls(True)
+        self.__update_add_settings_button()
 
         self.bar = QgsMessageBar()
         self.bar.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
@@ -97,6 +99,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     def __update_target_controls(self, checked):
         self.cboTargetService.setEnabled(self.radOverwrite.isChecked())
         self.txtNewService.setEnabled(not self.radOverwrite.isChecked())
+
+    def __update_add_settings_button(self):
+        # Make sure to call this method whenever the settings are added/removed
+        enable = self.__edit_model and self.__edit_model.rowCount() < len(SERVICE_SETTINGS)
+        self.btnAddSettings.setEnabled(enable)
 
     @pyqtSlot(int)
     def __source_service_changed(self, index):
@@ -198,7 +205,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             target_service, service_config(target_service, self.__conf_file_path)
         )
         self.tblServiceConfig.setModel(self.__edit_model)
-        self.tblServiceConfig.setItemDelegate(ServiceConfigDelegate(self))
+        self.tblServiceConfig.selectionModel().selectionChanged.connect(
+            self.__update_settings_buttons
+        )
         self.__edit_model.is_dirty_changed.connect(self.btnUpdateService.setEnabled)
         self.btnUpdateService.setDisabled(True)
 
@@ -206,6 +215,13 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             # Add service template
             self.__edit_model.add_settings(SETTINGS_TEMPLATE)
             self.__new_empty_file = False
+
+        self.__update_add_settings_button()  # Model just created
+        self.__update_settings_buttons(QItemSelection(), QItemSelection())
+
+    @pyqtSlot(QItemSelection, QItemSelection)
+    def __update_settings_buttons(self, selected, deselected):
+        self.btnRemoveSetting.setEnabled(bool(selected.indexes()))
 
     @pyqtSlot()
     def __add_settings_clicked(self):
@@ -217,6 +233,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 k: v["default"] for k, v in SERVICE_SETTINGS.items() if k in dlg.settings_to_add
             }
             self.__edit_model.add_settings(settings)
+            self.__update_add_settings_button()  # Settings added
 
     @pyqtSlot()
     def __remove_setting_clicked(self):
@@ -234,6 +251,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 == QMessageBox.StandardButton.Yes
             ):
                 self.__edit_model.remove_setting(selected_indexes[0])
+                self.__update_add_settings_button()  # Settings removed
 
     @pyqtSlot()
     def __update_service_clicked(self):
