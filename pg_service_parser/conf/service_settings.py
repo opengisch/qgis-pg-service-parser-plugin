@@ -1,3 +1,5 @@
+from pg_service_parser.conf.enums import SslModeEnum
+
 # Settings available for manual addition
 # See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-PARAMKEYWORDS
 SERVICE_SETTINGS = {
@@ -10,8 +12,9 @@ SERVICE_SETTINGS = {
         "description": "Password to be used if the server demands password authentication.",
     },
     "sslmode": {
-        "default": "",
+        "default": SslModeEnum.PREFER.value,
         "description": "This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.",
+        "values": SslModeEnum,
     },
     "passfile": {
         "default": "",
