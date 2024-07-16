@@ -17,6 +17,7 @@ from pg_service_parser.core.pg_service_parser_wrapper import (
 )
 from pg_service_parser.gui.dlg_service_name import ServiceNameDialog
 from pg_service_parser.gui.dlg_service_settings import ServiceSettingsDialog
+from pg_service_parser.gui.item_delegates import ServiceConfigDelegate
 from pg_service_parser.utils import get_ui_class
 
 DIALOG_UI = get_ui_class("pg_service_dialog.ui")
@@ -204,6 +205,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             target_service, service_config(target_service, self.__conf_file_path)
         )
         self.tblServiceConfig.setModel(self.__edit_model)
+        self.tblServiceConfig.setItemDelegate(ServiceConfigDelegate(self))
         self.tblServiceConfig.selectionModel().selectionChanged.connect(
             self.__update_settings_buttons
         )
