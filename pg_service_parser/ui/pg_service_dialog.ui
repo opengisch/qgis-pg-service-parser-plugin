@@ -86,7 +86,7 @@
      </property>
      <widget class="QWidget" name="tabEdit">
       <attribute name="title">
-       <string>Edit</string>
+       <string>Edit Service</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="1" column="0">
@@ -228,7 +228,7 @@
      </widget>
      <widget class="QWidget" name="tabCopy">
       <attribute name="title">
-       <string>Copy</string>
+       <string>Copy Service</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="2" column="1">
@@ -328,7 +328,7 @@
      </widget>
      <widget class="QWidget" name="tabConnections">
       <attribute name="title">
-       <string>Connections</string>
+       <string>QGIS Connections</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
        <item row="0" column="0" colspan="2">
