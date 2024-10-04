@@ -345,7 +345,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
     def __edit_connection(self, index):
         connection_name = self.__connection_model.index_to_connection_key(index)
-        edit_connection(connection_name)
+        edit_connection(connection_name, self)
         self.__initialize_service_connections(index)
 
     @pyqtSlot()
