@@ -2,11 +2,11 @@ from pathlib import Path
 
 from qgis.core import QgsApplication
 from qgis.gui import QgsMessageBar
-from qgis.PyQt.QtCore import QItemSelection, Qt, pyqtSlot
-from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QSizePolicy
+from qgis.PyQt.QtCore import QItemSelection, QModelIndex, Qt, pyqtSlot
+from qgis.PyQt.QtWidgets import QDialog, QHeaderView, QMessageBox, QSizePolicy
 
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
-from pg_service_parser.core.item_models import ServiceConfigModel
+from pg_service_parser.core.connection_model import ServiceConnectionModel
 from pg_service_parser.core.pg_service_parser_wrapper import (
     add_new_service,
     conf_path,
@@ -15,7 +15,14 @@ from pg_service_parser.core.pg_service_parser_wrapper import (
     service_names,
     write_service,
 )
-from pg_service_parser.gui.dlg_service_name import ServiceNameDialog
+from pg_service_parser.core.service_connections import (
+    create_connection,
+    edit_connection,
+    get_connections,
+    remove_connection,
+)
+from pg_service_parser.core.setting_model import ServiceConfigModel
+from pg_service_parser.gui.dlg_new_name import EnumNewName, NewNameDialog
 from pg_service_parser.gui.dlg_service_settings import ServiceSettingsDialog
 from pg_service_parser.gui.item_delegates import ServiceConfigDelegate
 from pg_service_parser.utils import get_ui_class
@@ -23,6 +30,7 @@ from pg_service_parser.utils import get_ui_class
 DIALOG_UI = get_ui_class("pg_service_dialog.ui")
 EDIT_TAB_INDEX = 0
 COPY_TAB_INDEX = 1
+CONNECTION_TAB_INDEX = 2
 
 
 class PgServiceDialog(QDialog, DIALOG_UI):
@@ -53,9 +61,13 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             return
 
         self.__edit_model = None
+        self.__connection_model = None
 
         self.btnAddSettings.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
         self.btnRemoveSetting.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
+        self.btnAddConnection.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
+        self.btnEditConnection.setIcon(QgsApplication.getThemeIcon("/symbologyEdit.svg"))
+        self.btnRemoveConnection.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.txtConfFile.setText(str(self.__conf_file_path))
         self.lblWarning.setVisible(False)
         self.lblConfFile.setText("Config file path found at ")
@@ -63,6 +75,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.txtConfFile.setVisible(True)
         self.tabWidget.setEnabled(True)
         self.btnCreateServiceFile.setVisible(False)
+        self.tblServiceConnections.horizontalHeader().setVisible(True)
         self.btnRemoveSetting.setEnabled(False)
 
         self.radOverwrite.toggled.connect(self.__update_target_controls)
@@ -73,9 +86,15 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.btnAddSettings.clicked.connect(self.__add_settings_clicked)
         self.btnRemoveSetting.clicked.connect(self.__remove_setting_clicked)
         self.btnUpdateService.clicked.connect(self.__update_service_clicked)
+        self.cboConnectionService.currentIndexChanged.connect(self.__connection_service_changed)
+        self.btnAddConnection.clicked.connect(self.__add_connection_clicked)
+        self.btnEditConnection.clicked.connect(self.__edit_connection_clicked)
+        self.btnRemoveConnection.clicked.connect(self.__remove_connection_clicked)
+        self.tblServiceConnections.doubleClicked.connect(self.__edit_double_clicked_connection)
 
         self.__initialize_edit_services()
         self.__initialize_copy_services()
+        self.__initialize_connection_services()
         self.__update_target_controls(True)
         self.__update_add_settings_button()
 
@@ -85,11 +104,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
     @pyqtSlot()
     def __create_file_clicked(self):
-        dlg = ServiceNameDialog(self)
+        dlg = NewNameDialog(EnumNewName.SERVICE, self)
         dlg.exec()
         if dlg.result() == QDialog.DialogCode.Accepted:
             Path.touch(self.__conf_file_path)
-            add_new_service(dlg.service_name)
+            add_new_service(dlg.new_name)
 
             # Set flag to get a template after some initialization
             self.__new_empty_file = True
@@ -138,6 +157,15 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboEditService.addItems(service_names(self.__conf_file_path))
         self.cboEditService.setCurrentText(current_text)
 
+    def __initialize_connection_services(self):
+        self.__connection_model = None
+        current_text = self.cboConnectionService.currentText()  # Remember latest currentText
+        self.cboConnectionService.blockSignals(True)  # Avoid triggering custom slot while clearing
+        self.cboConnectionService.clear()
+        self.cboConnectionService.blockSignals(False)
+        self.cboConnectionService.addItems(service_names(self.__conf_file_path))
+        self.cboConnectionService.setCurrentText(current_text)
+
     @pyqtSlot()
     def __copy_service(self):
         # Validations
@@ -178,6 +206,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             pass  # For now, services to be copied won't be altered in other tabs
         elif index == EDIT_TAB_INDEX:
             self.__initialize_edit_services()
+        elif index == CONNECTION_TAB_INDEX:
+            self.__initialize_connection_services()
 
     @pyqtSlot(int)
     def __edit_service_changed(self, index):
@@ -275,3 +305,72 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             self.__edit_model.set_not_dirty()
         else:
             self.bar.pushInfo("PG service", "Edit the service configuration and try again.")
+
+    @pyqtSlot(int)
+    def __connection_service_changed(self, index):
+        self.__initialize_service_connections()
+
+    def __initialize_service_connections(self, selected_index=QModelIndex()):
+        service = self.cboConnectionService.currentText()
+        self.__connection_model = ServiceConnectionModel(service, get_connections(service))
+        self.__update_connection_controls(False)
+        self.tblServiceConnections.setModel(self.__connection_model)
+        self.tblServiceConnections.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeToContents
+        )
+
+        self.tblServiceConnections.selectionModel().selectionChanged.connect(
+            self.__conn_table_selection_changed
+        )
+        self.tblServiceConnections.selectRow(selected_index.row())  # Remember selection
+
+    @pyqtSlot()
+    def __add_connection_clicked(self):
+        service = self.cboConnectionService.currentText()
+        dlg = NewNameDialog(EnumNewName.CONNECTION, self, service)
+        dlg.exec()
+        if dlg.result() == QDialog.DialogCode.Accepted:
+            create_connection(service, dlg.new_name)
+            self.__initialize_service_connections()
+
+    @pyqtSlot()
+    def __edit_connection_clicked(self):
+        selected_indexes = self.tblServiceConnections.selectedIndexes()
+        if selected_indexes:
+            self.__edit_connection(selected_indexes[0])
+
+    @pyqtSlot(QModelIndex)
+    def __edit_double_clicked_connection(self, index):
+        self.__edit_connection(index)
+
+    def __edit_connection(self, index):
+        connection_name = self.__connection_model.index_to_connection_key(index)
+        edit_connection(connection_name, self)
+        self.__initialize_service_connections(index)
+
+    @pyqtSlot()
+    def __remove_connection_clicked(self):
+        selected_indexes = self.tblServiceConnections.selectedIndexes()
+        if selected_indexes:
+            connection_name = self.__connection_model.index_to_connection_key(selected_indexes[0])
+            if (
+                QMessageBox.question(
+                    self,
+                    "Remove service connection",
+                    f"Are you sure you want to remove the connection to '{connection_name}'?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
+                )
+                == QMessageBox.StandardButton.Yes
+            ):
+                remove_connection(connection_name)
+                self.__initialize_service_connections()
+
+    @pyqtSlot(QItemSelection, QItemSelection)
+    def __conn_table_selection_changed(self, selected, deselected):
+        selected_indexes = bool(self.tblServiceConnections.selectedIndexes())
+        self.__update_connection_controls(selected_indexes)
+
+    def __update_connection_controls(self, enable):
+        self.btnEditConnection.setEnabled(enable)
+        self.btnRemoveConnection.setEnabled(enable)

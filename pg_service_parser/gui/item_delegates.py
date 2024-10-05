@@ -4,7 +4,7 @@
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QComboBox, QStyledItemDelegate
 
-from pg_service_parser.core.item_models import ServiceConfigModel
+from pg_service_parser.core.setting_model import ServiceConfigModel
 
 
 class ServiceConfigDelegate(QStyledItemDelegate):
