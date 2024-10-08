@@ -1,4 +1,5 @@
 from qgis.core import (
+    Qgis,
     QgsAbstractDatabaseProviderConnection,
     QgsDataSourceUri,
     QgsProviderRegistry,
@@ -37,9 +38,12 @@ def edit_connection(connection_name: str, parent: QWidget) -> None:
 
     if connection_name in provider.dbConnections():
         pg = QgsGui.sourceSelectProviderRegistry().providerByName("postgres")
-        widget = pg.createDataSourceWidget(
-            parent, widgetMode=QgsProviderRegistry.WidgetMode.Standalone
-        )
+        if Qgis.QGIS_VERSION_INT >= 33900:
+            widget_mode = QgsProviderRegistry.WidgetMode.Standalone
+        else:
+            widget_mode = QgsProviderRegistry.WidgetMode.None_
+
+        widget = pg.createDataSourceWidget(parent, widgetMode=widget_mode)
 
         settings = QSettings()
         settings.setValue("PostgreSQL/connections/selected", connection_name)
