@@ -24,11 +24,14 @@ Clients like QGIS will directly read your `pg_service.conf` file from any of the
 <img src="https://raw.githubusercontent.com/opengisch/qgis-pg-service-parser-plugin/main/images/edit_service.png" alt="Edit service"/>
 
 
-
 ### Copy PG service entries
 
 <img src="https://raw.githubusercontent.com/opengisch/qgis-pg-service-parser-plugin/main/images/copy_service.png" alt="Copy service"/>
 
+
+### QGIS Connection to a PG service
+
+<img src="https://raw.githubusercontent.com/opengisch/qgis-pg-service-parser-plugin/main/images/qgis_connection_to_service.png" alt="QGIS Connection to service"/>
 
 
 ### For devs
