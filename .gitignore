@@ -2,3 +2,4 @@ pg_service_parser/libs/
 !pg_service_parser/libs/__init__.py
 .idea
 __pycache__
+.DS_Store
