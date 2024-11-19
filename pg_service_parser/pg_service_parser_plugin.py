@@ -45,6 +45,7 @@ class PgServiceParserPlugin:
         self.button.setIcon(icon)
 
         self.menu = self.iface.pluginMenu().addMenu(icon, "PG service parser")
+        self.menu.setToolTipsVisible(True)
 
         self.default_action = QAction(
             QIcon(str(Path(__file__).parent / "images" / "logo.png")),
@@ -62,6 +63,7 @@ class PgServiceParserPlugin:
         self.menu.clear()
 
         button_menu = QMenu()
+        button_menu.setToolTipsVisible(True)
         button_menu.addAction(self.default_action)
 
         self.menu.addAction(self.default_action)
