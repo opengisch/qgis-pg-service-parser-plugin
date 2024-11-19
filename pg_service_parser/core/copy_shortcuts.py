@@ -113,8 +113,9 @@ class ShortcutsModel(QAbstractTableModel):
             for sh in self.shortcuts:
                 if sh.name == value:
                     return False
-            self.shortcuts[index.row()].rename(value)
-            self.dataChanged.emit(index, index)
-            return True
+            if index.column() == 0:
+                self.shortcuts[index.row()].rename(value)
+                self.dataChanged.emit(index, index)
+                return True
 
         return False
