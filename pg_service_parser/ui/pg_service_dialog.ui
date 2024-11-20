@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>499</width>
-    <height>316</height>
+    <width>575</width>
+    <height>419</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -231,22 +231,6 @@
        <string>Copy Service</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="2" column="1">
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Preferred</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>71</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item row="1" column="0">
         <spacer name="horizontalSpacer">
          <property name="orientation">
@@ -259,6 +243,71 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="btnCopyService">
+         <property name="text">
+          <string>Copy service</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0" colspan="2">
+        <widget class="QGroupBox" name="groupBox">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sortcuts allow to copy services directly from the plugin icon in the toolbar or from the menu entry.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="title">
+          <string>Shortcuts</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_6">
+          <item row="0" column="1">
+           <widget class="QToolButton" name="shortcutAddButton">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add a shortcut to the plugin toolbar button and to the menu entry&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QToolButton" name="shortcutRemoveButton">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove shortcut&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <spacer name="verticalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="0" column="0" rowspan="3">
+           <widget class="QTableView" name="shortcutsTableView">
+            <property name="selectionMode">
+             <enum>QAbstractItemView::SingleSelection</enum>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <attribute name="verticalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </item>
        <item row="0" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout">
@@ -317,12 +366,34 @@
          </item>
         </layout>
        </item>
-       <item row="1" column="1">
-        <widget class="QPushButton" name="btnCopyService">
-         <property name="text">
-          <string>Copy service</string>
+       <item row="4" column="0" colspan="2">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
          </property>
-        </widget>
+         <property name="sizeType">
+          <enum>QSizePolicy::Preferred</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>71</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <spacer name="verticalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>

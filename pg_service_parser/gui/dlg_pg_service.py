@@ -7,6 +7,7 @@ from qgis.PyQt.QtWidgets import QDialog, QHeaderView, QMessageBox, QSizePolicy
 
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
 from pg_service_parser.core.connection_model import ServiceConnectionModel
+from pg_service_parser.core.copy_shortcuts import ShortcutsModel
 from pg_service_parser.core.pg_service_parser_wrapper import (
     add_new_service,
     conf_path,
@@ -34,13 +35,14 @@ CONNECTION_TAB_INDEX = 2
 
 
 class PgServiceDialog(QDialog, DIALOG_UI):
-
-    def __init__(self, parent):
+    def __init__(self, shortcuts_model: ShortcutsModel, parent):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
         # Flag to handle initialization of new files
         self.__new_empty_file = False
+
+        self.__shortcuts_model = shortcuts_model
 
         self.__conf_file_path = conf_path()
         self.__initialize_dialog()
@@ -68,6 +70,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.btnAddConnection.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
         self.btnEditConnection.setIcon(QgsApplication.getThemeIcon("/symbologyEdit.svg"))
         self.btnRemoveConnection.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
+        self.shortcutAddButton.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
+        self.shortcutRemoveButton.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.txtConfFile.setText(str(self.__conf_file_path))
         self.lblWarning.setVisible(False)
         self.lblConfFile.setText("Config file path found at ")
@@ -77,9 +81,12 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.btnCreateServiceFile.setVisible(False)
         self.tblServiceConnections.horizontalHeader().setVisible(True)
         self.btnRemoveSetting.setEnabled(False)
+        self.shortcutRemoveButton.setEnabled(False)
 
         self.radOverwrite.toggled.connect(self.__update_target_controls)
         self.btnCopyService.clicked.connect(self.__copy_service)
+        self.shortcutAddButton.clicked.connect(self.__create_copy_shortcut)
+        self.shortcutRemoveButton.clicked.connect(self.__remove_copy_shortcut)
         self.cboSourceService.currentIndexChanged.connect(self.__source_service_changed)
         self.tabWidget.currentChanged.connect(self.__current_tab_changed)
         self.cboEditService.currentIndexChanged.connect(self.__edit_service_changed)
@@ -118,6 +125,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     def __update_target_controls(self, checked):
         self.cboTargetService.setEnabled(self.radOverwrite.isChecked())
         self.txtNewService.setEnabled(not self.radOverwrite.isChecked())
+        self.shortcutAddButton.setEnabled(self.radOverwrite.isChecked())
 
     def __update_add_settings_button(self):
         # Make sure to call this method whenever the settings are added/removed
@@ -147,6 +155,15 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboSourceService.blockSignals(False)
         self.cboSourceService.addItems(service_names(self.__conf_file_path))
         self.cboSourceService.setCurrentText(current_text)
+
+        self.shortcutsTableView.setModel(self.__shortcuts_model)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.shortcutsTableView.selectionModel().selectionChanged.connect(
+            self.__shortcuts_selection_changed
+        )
+        self.shortcutsTableView.resizeColumnsToContents()
 
     def __initialize_edit_services(self):
         self.__edit_model = None
@@ -198,6 +215,34 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.bar.pushSuccess("PG service", f"PG service copied to '{target_service}'!")
         if self.radCreate.isChecked():
             self.__initialize_copy_services()  # Reflect the newly added service
+
+    @pyqtSlot()
+    def __create_copy_shortcut(self):
+        target_service = self.cboTargetService.currentText()
+
+        if not target_service:
+            self.bar.pushInfo("PG service", "Select a valid target service and try again.")
+            return
+        self.__shortcuts_model.add_shortcut(self.cboSourceService.currentText(), target_service)
+        self.shortcutsTableView.resizeColumnsToContents()
+
+    @pyqtSlot()
+    def __remove_copy_shortcut(self):
+        selectedIndexes = self.shortcutsTableView.selectedIndexes()
+        if len(selectedIndexes) == 0:
+            return
+
+        shortcut = self.__shortcuts_model.data(selectedIndexes[0])
+
+        res = QMessageBox.question(
+            self,
+            "Remove shortcut",
+            f"Are you sure you want to remove the shortcut '{shortcut}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if res == QMessageBox.StandardButton.Yes:
+            self.__shortcuts_model.remove_shortcut(selectedIndexes[0])
 
     @pyqtSlot(int)
     def __current_tab_changed(self, index):
@@ -374,3 +419,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     def __update_connection_controls(self, enable):
         self.btnEditConnection.setEnabled(enable)
         self.btnRemoveConnection.setEnabled(enable)
+
+    @pyqtSlot(QItemSelection, QItemSelection)
+    def __shortcuts_selection_changed(self, selected, deselected):
+        self.shortcutRemoveButton.setEnabled(len(selected) > 0)
