@@ -95,7 +95,7 @@ class ShortcutsModel(QAbstractTableModel):
         if not index.isValid:
             return None
 
-        if role == Qt.DisplayRole:
+        if role == Qt.DisplayRole or role == Qt.EditRole:
             if index.column() == 0:
                 return self.shortcuts[index.row()].name
             if index.column() == 1:

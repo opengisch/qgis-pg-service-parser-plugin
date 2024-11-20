@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>693</width>
-    <height>574</height>
+    <width>575</width>
+    <height>419</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -253,12 +253,18 @@
        </item>
        <item row="3" column="0" colspan="2">
         <widget class="QGroupBox" name="groupBox">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sortcuts allow to copy services directly from the plugin icon in the toolbar or from the menu entry.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="title">
           <string>Shortcuts</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_6">
           <item row="0" column="1">
            <widget class="QToolButton" name="shortcutAddButton">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add a shortcut to the plugin toolbar button and to the menu entry&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -266,6 +272,9 @@
           </item>
           <item row="1" column="1">
            <widget class="QToolButton" name="shortcutRemoveButton">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove shortcut&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -292,6 +301,9 @@
             <property name="selectionBehavior">
              <enum>QAbstractItemView::SelectRows</enum>
             </property>
+            <attribute name="verticalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
            </widget>
           </item>
          </layout>

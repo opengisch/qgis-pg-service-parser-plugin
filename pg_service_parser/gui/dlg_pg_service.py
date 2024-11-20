@@ -157,10 +157,13 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboSourceService.setCurrentText(current_text)
 
         self.shortcutsTableView.setModel(self.__shortcuts_model)
-        self.shortcutsTableView.resizeColumnsToContents()
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.shortcutsTableView.selectionModel().selectionChanged.connect(
             self.__shortcuts_selection_changed
         )
+        self.shortcutsTableView.resizeColumnsToContents()
 
     def __initialize_edit_services(self):
         self.__edit_model = None
@@ -217,12 +220,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     def __create_copy_shortcut(self):
         target_service = self.cboTargetService.currentText()
 
-        if not self.cboTargetService.currentText():
+        if not target_service:
             self.bar.pushInfo("PG service", "Select a valid target service and try again.")
             return
         self.__shortcuts_model.add_shortcut(self.cboSourceService.currentText(), target_service)
-        if self.__shortcuts_model.rowCount() == 1:
-            self.shortcutsTableView.resizeColumnsToContents()
+        self.shortcutsTableView.resizeColumnsToContents()
 
     @pyqtSlot()
     def __remove_copy_shortcut(self):

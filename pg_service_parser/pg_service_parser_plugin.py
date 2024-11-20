@@ -44,7 +44,7 @@ class PgServiceParserPlugin:
         self.button = QToolButton(self.iface.mainWindow())
         self.button.setIcon(icon)
 
-        self.menu = self.iface.pluginMenu().addMenu(icon, "PG service parser")
+        self.menu = self.iface.databaseMenu().addMenu(icon, "PG service parser")
         self.menu.setToolTipsVisible(True)
 
         self.default_action = QAction(
@@ -98,7 +98,7 @@ class PgServiceParserPlugin:
     def unload(self):
         self.iface.removeToolBarIcon(self.action)
         self.iface.removePluginDatabaseMenu("PG service parser", self.action)
-        self.iface.pluginMenu().removeAction(self.menu.menuAction())
+        self.iface.databaseMenu().removeAction(self.menu.menuAction())
         QgsSettingsTree.unregisterPluginTreeNode(PLUGIN_NAME)
 
     def run(self):
@@ -106,10 +106,9 @@ class PgServiceParserPlugin:
         dlg.exec()
 
     def copy_service(self, service_from: str, service_to: str):
-        print(service_from, service_to)
         _conf_path = conf_path()
         if _conf_path.exists():
             copy_service_settings(service_from, service_to, _conf_path)
             self.iface.messageBar().pushMessage(
-                "PG service", f"PG service copied to '{service_to}'!"
+                "PG service", f"PG service copied from '{service_from}' to '{service_to}'!"
             )
