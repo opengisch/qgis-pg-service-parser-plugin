@@ -60,6 +60,10 @@ class PgServiceParserPlugin:
         self.build_menus()
 
     def build_menus(self):
+        _conf_path = conf_path()
+        if not _conf_path.exists():
+            return
+
         self.menu.clear()
 
         button_menu = QMenu()
@@ -69,7 +73,6 @@ class PgServiceParserPlugin:
         self.menu.addAction(self.default_action)
 
         if len(self.shortcuts_model.shortcuts):
-            _conf_path = conf_path()
             _services = service_names(_conf_path)
             self.button.setPopupMode(QToolButton.MenuButtonPopup)
             button_menu.addSeparator()
