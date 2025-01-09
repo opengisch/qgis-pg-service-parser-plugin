@@ -4,8 +4,8 @@ from typing import List, Optional
 from pg_service_parser.libs import pgserviceparser
 
 
-def conf_path() -> Path:
-    return pgserviceparser.conf_path()
+def conf_path(create_if_missing: Optional[bool] = False) -> Path:
+    return pgserviceparser.conf_path(create_if_missing)
 
 
 def service_names(conf_file_path: Optional[Path] = None) -> List[str]:

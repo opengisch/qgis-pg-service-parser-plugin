@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from qgis.core import QgsApplication
 from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import QItemSelection, QModelIndex, Qt, pyqtSlot
@@ -114,7 +112,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         dlg = NewNameDialog(EnumNewName.SERVICE, self)
         dlg.exec()
         if dlg.result() == QDialog.DialogCode.Accepted:
-            Path.touch(self.__conf_file_path)
+            self.__conf_file_path = conf_path(create_if_missing=True)
+
             add_new_service(dlg.new_name)
 
             # Set flag to get a template after some initialization
