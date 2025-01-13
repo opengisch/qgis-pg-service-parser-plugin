@@ -38,24 +38,25 @@ class PgServiceParserPlugin:
     def initGui(self):
         icon = QIcon(str(Path(__file__).parent / "images" / "logo.png"))
 
-        self.shortcuts_model = ShortcutsModel(self.iface.mainWindow())
-        self.shortcuts_model.dataChanged.connect(self.build_menus)
-
-        self.button = QToolButton(self.iface.mainWindow())
-        self.button.setIcon(icon)
-
-        self.menu = self.iface.databaseMenu().addMenu(icon, "PG service parser")
-        self.menu.setToolTipsVisible(True)
-
         self.default_action = QAction(
-            QIcon(str(Path(__file__).parent / "images" / "logo.png")),
+            icon,
             "PG service parser",
             self.iface.mainWindow(),
         )
         self.default_action.triggered.connect(self.run)
-        self.button.setDefaultAction(self.default_action)
 
+        self.iface.addPluginToDatabaseMenu("PG service parser", self.default_action)
+        self.menu = self.iface.mainWindow().getDatabaseMenu("PG service parser")
+        self.menu.setIcon(icon)
+        self.menu.setToolTipsVisible(True)
+
+        self.button = QToolButton(self.iface.mainWindow())
+        self.button.setIcon(icon)
+        self.button.setDefaultAction(self.default_action)
         self.action = self.iface.addToolBarWidget(self.button)
+
+        self.shortcuts_model = ShortcutsModel(self.iface.mainWindow())
+        self.shortcuts_model.dataChanged.connect(self.build_menus)
 
         self.build_menus()
 
@@ -65,12 +66,11 @@ class PgServiceParserPlugin:
             return
 
         self.menu.clear()
+        self.menu.addAction(self.default_action)
 
         button_menu = QMenu()
         button_menu.setToolTipsVisible(True)
         button_menu.addAction(self.default_action)
-
-        self.menu.addAction(self.default_action)
 
         if len(self.shortcuts_model.shortcuts):
             _services = service_names(_conf_path)
@@ -100,8 +100,9 @@ class PgServiceParserPlugin:
 
     def unload(self):
         self.iface.removeToolBarIcon(self.action)
-        self.iface.removePluginDatabaseMenu("PG service parser", self.action)
-        self.iface.databaseMenu().removeAction(self.menu.menuAction())
+        self.iface.removePluginDatabaseMenu("PG service parser", self.default_action)
+        self.menu.clear()
+        del self.menu
         QgsSettingsTree.unregisterPluginTreeNode(PLUGIN_NAME)
 
     def run(self):
