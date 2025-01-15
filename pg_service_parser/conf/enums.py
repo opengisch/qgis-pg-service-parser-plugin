@@ -8,3 +8,8 @@ class SslModeEnum(Enum):
     REQUIRE = "require"
     VERIFY_CA = "verify-ca"
     VERIFY_FULL = "verify-full"
+
+
+class WidgetTypeEnum(Enum):
+    COMBOBOX = 0
+    FILEWIDGET = 1
