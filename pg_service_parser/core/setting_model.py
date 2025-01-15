@@ -1,7 +1,7 @@
 from qgis.PyQt.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QColorConstants, QFont
 
-from pg_service_parser.conf.enums import SslModeEnum
+from pg_service_parser.conf.enums import WidgetTypeEnum
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS
 
 
@@ -89,8 +89,19 @@ class ServiceConfigModel(QAbstractTableModel):
             ):
                 return QColorConstants.DarkGreen
         elif role == Qt.ItemDataRole.UserRole:
-            if index.column() == self.VALUE_COL and key == self.SSLMODE_KEY:
-                return {key: [e.value for e in SslModeEnum]}
+            # Store custom widget type and config
+            setting = self.__settings_data.get(key, {})
+            return (
+                {
+                    "custom_type": setting.get("custom_type", None),
+                    "config": setting.get("config", None),
+                }
+                if (
+                    index.column() == ServiceConfigModel.VALUE_COL
+                    and isinstance(setting.get("custom_type"), WidgetTypeEnum)
+                )
+                else {}
+            )
 
         return None
 
@@ -152,9 +163,16 @@ class ServiceConfigModel(QAbstractTableModel):
         return [k for k, v in self.__model_data.items() if v.strip() == ""]
 
     @staticmethod
-    def is_sslmode_edit_cell(index):
+    def is_custom_widget_cell(index):
+        """
+        Returns whether we have a custom widget for the given index
+
+        :param index: Model index
+        :return: True is a custom widget is set for the given index
+        """
+        data = index.data(Qt.ItemDataRole.UserRole)
         return (
             index.column() == ServiceConfigModel.VALUE_COL
-            and isinstance(index.data(Qt.ItemDataRole.UserRole), dict)
-            and ServiceConfigModel.SSLMODE_KEY in index.data(Qt.ItemDataRole.UserRole)
+            and isinstance(data, dict)
+            and "custom_type" in data
         )
