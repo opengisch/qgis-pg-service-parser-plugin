@@ -1,7 +1,50 @@
+import stat
 from pathlib import Path
 from typing import List, Optional
 
 from pg_service_parser.libs import pgserviceparser
+
+
+def __make_file_writable(path: Path):
+    current_permission = stat.S_IMODE(path.stat().st_mode)
+    WRITE = stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
+    path.chmod(current_permission | WRITE)  # May trigger permission error
+
+
+def __whenReadOnlyTryToAddWritePermission(func):
+    """
+    Decorator to be applied to functions that attempt to modify a service file.
+
+    If the file is read-only, a PermissionError exception will be raised by the
+    underlying lib.
+
+    This decorator handles that error by attempting to set write permissions
+    (which works if the user is the owner of that file or has proper rights to
+    alter the file permissions, e.g., because it's inheriting them from the
+    parent), and rerunning the decorated function with the newly writable file.
+
+    However, if the user is not the file owner (or cannot modify permissions on
+    the file), permissions won't be set, and we'll raise the PermissionError so
+    that it can be handled by the GUI.
+    """
+
+    def wrapper(*args, **kwargs):
+        attempt = 0  # After eventual fail, we'll attempt only once more
+        while attempt <= 1:
+            try:
+                return func(*args, **kwargs)
+            except PermissionError:
+                if attempt == 1:  # If it's the 2nd attempt, leave with error
+                    raise
+
+                try:
+                    __make_file_writable(conf_path())
+                except PermissionError:
+                    pass  # Ignore PermissionError by chmod()
+                finally:
+                    attempt += 1
+
+    return wrapper
 
 
 def conf_path(create_if_missing: Optional[bool] = False) -> Path:
@@ -12,14 +55,16 @@ def service_names(conf_file_path: Optional[Path] = None) -> List[str]:
     return pgserviceparser.service_names(conf_file_path)
 
 
+@__whenReadOnlyTryToAddWritePermission
 def add_new_service(service_name: str, conf_file_path: Optional[Path] = None) -> bool:
-    return create_service(service_name, {}, conf_file_path)
+    return __create_service(service_name, {}, conf_file_path)
 
 
 def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> dict:
     return pgserviceparser.service_config(service_name, conf_file_path)
 
 
+@__whenReadOnlyTryToAddWritePermission
 def write_service(
     service_name: str,
     settings: dict,
@@ -28,7 +73,7 @@ def write_service(
     pgserviceparser.write_service(service_name, settings, conf_file_path)
 
 
-def create_service(
+def __create_service(
     service_name: str, settings: dict, conf_file_path: Optional[Path] = None
 ) -> bool:
     config = pgserviceparser.full_config(conf_file_path)
@@ -46,6 +91,7 @@ def create_service(
     return False
 
 
+@__whenReadOnlyTryToAddWritePermission
 def copy_service_settings(
     source_service_name: str, target_service_name: str, conf_file_path: Optional[Path] = None
 ):
@@ -55,7 +101,7 @@ def copy_service_settings(
     if target_service_name in config:
         pgserviceparser.write_service(target_service_name, settings, conf_file_path)
     else:
-        create_service(target_service_name, settings, conf_file_path)
+        __create_service(target_service_name, settings, conf_file_path)
 
 
 if __name__ == "__main__":
@@ -69,7 +115,7 @@ if __name__ == "__main__":
         "password": "secret",
         "dbname": "qgis_test_db",
     }
-    assert create_service("qgis-test", _settings)
+    assert __create_service("qgis-test", _settings)
     assert service_names() == ["qgis-test"]
 
     # Clone existing service
@@ -85,7 +131,7 @@ if __name__ == "__main__":
         "password": "secret",
         "dbname": "qgis_test_db2",
     }
-    assert create_service("qgis-new-test", _settings)
+    assert __create_service("qgis-new-test", _settings)
     assert service_names() == ["qgis-test", "qgis-demo", "qgis-new-test"]
     assert service_config("qgis-new-test") == _settings
 
