@@ -36,7 +36,7 @@ The PG service file is read-only and cannot be updated.
 To fix this, make sure you have enough permissions and retry.
 Otherwise, you can use PGSERVICEFILE or PGSYSCONFDIR environment
 variables to point to a PG service file located in a folder
-where you have write permission.
+where you have write permissions.
 """
 
 
@@ -139,7 +139,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
     def __update_add_settings_button(self):
         # Make sure to call this method whenever the settings are added/removed
-        enable = self.__edit_model and self.__edit_model.rowCount() < len(SERVICE_SETTINGS)
+        enable = bool(self.__edit_model and self.__edit_model.rowCount() < len(SERVICE_SETTINGS))
         self.btnAddSettings.setEnabled(enable)
 
     @pyqtSlot(int)
@@ -197,7 +197,10 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     def __copy_service(self):
         # Validations
         if self.radCreate.isChecked():
-            if not self.txtNewService.text().strip():
+            if not self.cboSourceService.currentText():
+                self.bar.pushInfo("PG service", "Select a valid source service and try again.")
+                return
+            elif not self.txtNewService.text().strip():
                 self.bar.pushInfo("PG service", "Enter a service name and try again.")
                 return
             elif self.txtNewService.text().strip() in service_names(self.__conf_file_path):
