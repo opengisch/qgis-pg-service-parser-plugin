@@ -30,6 +30,14 @@ DIALOG_UI = get_ui_class("pg_service_dialog.ui")
 EDIT_TAB_INDEX = 0
 COPY_TAB_INDEX = 1
 CONNECTION_TAB_INDEX = 2
+PERMISSION_ERROR_MESSAGE = """
+The PG service file is read-only and cannot be updated.
+
+To fix this, make sure you have enough permissions and retry.
+Otherwise, you can use PGSERVICEFILE or PGSYSCONFDIR environment
+variables to point to a PG service file located in a folder
+where you have write permission.
+"""
 
 
 class PgServiceDialog(QDialog, DIALOG_UI):
@@ -114,11 +122,14 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         if dlg.result() == QDialog.DialogCode.Accepted:
             self.__conf_file_path = conf_path(create_if_missing=True)
 
-            add_new_service(dlg.new_name)
-
-            # Set flag to get a template after some initialization
-            self.__new_empty_file = True
-            self.__initialize_dialog()
+            try:
+                add_new_service(dlg.new_name)
+            except PermissionError:
+                self.bar.pushWarning("PG service", PERMISSION_ERROR_MESSAGE)
+            else:
+                # Set flag to get a template after some initialization
+                self.__new_empty_file = True
+                self.__initialize_dialog()
 
     @pyqtSlot(bool)
     def __update_target_controls(self, checked):
@@ -208,12 +219,16 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             else self.txtNewService.text().strip()
         )
 
-        copy_service_settings(
-            self.cboSourceService.currentText(), target_service, self.__conf_file_path
-        )
-        self.bar.pushSuccess("PG service", f"PG service copied to '{target_service}'!")
-        if self.radCreate.isChecked():
-            self.__initialize_copy_services()  # Reflect the newly added service
+        try:
+            copy_service_settings(
+                self.cboSourceService.currentText(), target_service, self.__conf_file_path
+            )
+        except PermissionError:
+            self.bar.pushWarning("PG service", PERMISSION_ERROR_MESSAGE)
+        else:
+            self.bar.pushSuccess("PG service", f"PG service copied to '{target_service}'!")
+            if self.radCreate.isChecked():
+                self.__initialize_copy_services()  # Reflect the newly added service
 
     @pyqtSlot()
     def __create_copy_shortcut(self):
@@ -342,11 +357,15 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 return
 
             target_service = self.cboEditService.currentText()
-            write_service(
-                target_service, self.__edit_model.service_config(), self.__conf_file_path
-            )
-            self.bar.pushSuccess("PG service", f"PG service '{target_service}' updated!")
-            self.__edit_model.set_not_dirty()
+            try:
+                write_service(
+                    target_service, self.__edit_model.service_config(), self.__conf_file_path
+                )
+            except PermissionError:
+                self.bar.pushWarning("PG service", PERMISSION_ERROR_MESSAGE)
+            else:
+                self.bar.pushSuccess("PG service", f"PG service '{target_service}' updated!")
+                self.__edit_model.set_not_dirty()
         else:
             self.bar.pushInfo("PG service", "Edit the service configuration and try again.")
 
