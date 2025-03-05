@@ -82,7 +82,7 @@ def __create_service(
 
     config.add_section(service_name)
     with open(conf_file_path or pgserviceparser.conf_path(), "w") as f:
-        config.write(f)
+        config.write(f, space_around_delimiters=False)
 
     if service_name in config:
         pgserviceparser.write_service(service_name, settings, conf_file_path)
