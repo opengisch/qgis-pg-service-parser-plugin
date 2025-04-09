@@ -2,7 +2,6 @@ from qgis.PyQt.QtCore import QAbstractTableModel, QModelIndex, QObject, Qt
 
 from pg_service_parser.core.plugin_settings import PluginSettings
 
-
 class Shortcut:
     def __init__(self, service_from: str, service_to: str, name: str = None):
         if name:
@@ -63,7 +62,7 @@ class ShortcutsModel(QAbstractTableModel):
         self.dataChanged.emit(index, index)
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
-        if orientation == Qt.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             return None
 
         if role == Qt.ItemDataRole.DisplayRole:
