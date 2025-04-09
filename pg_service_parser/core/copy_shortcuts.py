@@ -2,6 +2,7 @@ from qgis.PyQt.QtCore import QAbstractTableModel, QModelIndex, QObject, Qt
 
 from pg_service_parser.core.plugin_settings import PluginSettings
 
+
 class Shortcut:
     def __init__(self, service_from: str, service_to: str, name: str = None):
         if name:
