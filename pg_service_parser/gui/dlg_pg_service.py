@@ -167,9 +167,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboSourceService.setCurrentText(current_text)
 
         self.shortcutsTableView.setModel(self.__shortcuts_model)
-        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)
-        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
-        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.shortcutsTableView.selectionModel().selectionChanged.connect(
             self.__shortcuts_selection_changed
         )
@@ -382,7 +382,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.__update_connection_controls(False)
         self.tblServiceConnections.setModel(self.__connection_model)
         self.tblServiceConnections.horizontalHeader().setSectionResizeMode(
-            0, QHeaderView.ResizeToContents
+            0, QHeaderView.ResizeMode.ResizeToContents
         )
 
         self.tblServiceConnections.selectionModel().selectionChanged.connect(
