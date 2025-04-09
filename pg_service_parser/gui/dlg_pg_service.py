@@ -167,9 +167,15 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboSourceService.setCurrentText(current_text)
 
         self.shortcutsTableView.setModel(self.__shortcuts_model)
-        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
-        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
-        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeMode.Interactive
+        )
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
+            1, QHeaderView.ResizeMode.Interactive
+        )
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
+            2, QHeaderView.ResizeMode.Stretch
+        )
         self.shortcutsTableView.selectionModel().selectionChanged.connect(
             self.__shortcuts_selection_changed
         )
