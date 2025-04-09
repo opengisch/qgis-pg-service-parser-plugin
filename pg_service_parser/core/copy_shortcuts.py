@@ -95,7 +95,7 @@ class ShortcutsModel(QAbstractTableModel):
         if not index.isValid:
             return None
 
-        if role == Qt.ItemDataRole.DisplayRole or role == Qt.EditRole:
+        if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
             if index.column() == 0:
                 return self.shortcuts[index.row()].name
             if index.column() == 1:
@@ -105,11 +105,11 @@ class ShortcutsModel(QAbstractTableModel):
 
         return None
 
-    def setData(self, index, value, role=Qt.EditRole):
+    def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         if not index.isValid():
             return False
 
-        if role == Qt.EditRole and len(value) > 0:
+        if role == Qt.ItemDataRole.EditRole and len(value) > 0:
             for sh in self.shortcuts:
                 if sh.name == value:
                     return False
