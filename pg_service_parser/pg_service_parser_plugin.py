@@ -94,7 +94,7 @@ class PgServiceParserPlugin:
                 button_menu.addAction(action)
                 self.menu.addAction(action)
         else:
-            self.button.setPopupMode(QToolButton.DelayedPopup)
+            self.button.setPopupMode(QToolButton.ToolButtonPopupMode.DelayedPopup)
 
         self.button.setMenu(button_menu)
 

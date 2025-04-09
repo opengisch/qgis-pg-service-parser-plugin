@@ -62,11 +62,11 @@ class ShortcutsModel(QAbstractTableModel):
         self.endRemoveRows()
         self.dataChanged.emit(index, index)
 
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
-        if orientation == Qt.Vertical:
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
+        if orientation == Qt.Orientation.Vertical:
             return None
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             if section == 0:
                 return self.tr("Name")
             if section == 1:
@@ -91,11 +91,11 @@ class ShortcutsModel(QAbstractTableModel):
         else:
             return Qt.ItemIsSelectable | Qt.ItemIsEnabled
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if not index.isValid:
             return None
 
-        if role == Qt.DisplayRole or role == Qt.EditRole:
+        if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
             if index.column() == 0:
                 return self.shortcuts[index.row()].name
             if index.column() == 1:
@@ -105,11 +105,11 @@ class ShortcutsModel(QAbstractTableModel):
 
         return None
 
-    def setData(self, index, value, role=Qt.EditRole):
+    def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         if not index.isValid():
             return False
 
-        if role == Qt.EditRole and len(value) > 0:
+        if role == Qt.ItemDataRole.EditRole and len(value) > 0:
             for sh in self.shortcuts:
                 if sh.name == value:
                     return False
