@@ -22,7 +22,7 @@ class ServiceSettingsDialog(QDialog, DIALOG_UI):
         for setting, data in SERVICE_SETTINGS.items():
             item = QListWidgetItem(setting)
             if setting in used_settings:
-                item.setFlags(item.flags() & ~Qt.ItemIsSelectable & ~Qt.ItemIsEnabled)
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsSelectable & ~Qt.ItemFlag.ItemIsEnabled)
             if data.get("description", None):
                 item.setToolTip(data["description"])
 
@@ -32,7 +32,7 @@ class ServiceSettingsDialog(QDialog, DIALOG_UI):
 
     @pyqtSlot()
     def __selection_changed(self):
-        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(
             bool(self.lstSettings.selectedItems())
         )
 
