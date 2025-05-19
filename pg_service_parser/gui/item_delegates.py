@@ -32,12 +32,12 @@ class ServiceConfigDelegate(QStyledItemDelegate):
             elif widget_type == WidgetTypeEnum.FILEWIDGET:
                 widget = QgsFileWidget(parent)
                 widget.setStorageMode(
-                    QgsFileWidget.GetFile
+                    QgsFileWidget.StorageMode.GetFile
                     if config.get("get_file_mode")
-                    else QgsFileWidget.GetDirectory
+                    else QgsFileWidget.StorageMode.GetDirectory
                 )
 
-                if widget.storageMode() == QgsFileWidget.GetFile:
+                if widget.storageMode() == QgsFileWidget.StorageMode.GetFile:
                     widget.setDialogTitle(config.get("title", "Select an existing file"))
                     widget.setFilter(config.get("filter", ""))
                 else:
