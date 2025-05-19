@@ -87,9 +87,13 @@ class ShortcutsModel(QAbstractTableModel):
             return None
 
         if index.column() == 0:
-            return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+            return (
+                Qt.ItemFlag.ItemIsSelectable
+                | Qt.ItemFlag.ItemIsEnabled
+                | Qt.ItemFlag.ItemIsEditable
+            )
         else:
-            return Qt.ItemIsSelectable | Qt.ItemIsEnabled
+            return Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if not index.isValid:

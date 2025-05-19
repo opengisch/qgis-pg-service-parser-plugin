@@ -74,7 +74,7 @@ class PgServiceParserPlugin:
 
         if len(self.shortcuts_model.shortcuts):
             _services = service_names(_conf_path)
-            self.button.setPopupMode(QToolButton.MenuButtonPopup)
+            self.button.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
             button_menu.addSeparator()
             for shortcut in self.shortcuts_model.shortcuts:
                 action = QAction(shortcut.name, self.iface.mainWindow())
