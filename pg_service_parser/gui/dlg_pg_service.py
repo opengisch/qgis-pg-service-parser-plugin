@@ -18,6 +18,7 @@ from pg_service_parser.core.service_connections import (
     create_connection,
     edit_connection,
     get_connections,
+    refresh_connections,
     remove_connection,
 )
 from pg_service_parser.core.setting_model import ServiceConfigModel
@@ -41,9 +42,11 @@ where you have write permissions.
 
 
 class PgServiceDialog(QDialog, DIALOG_UI):
-    def __init__(self, shortcuts_model: ShortcutsModel, parent):
-        QDialog.__init__(self, parent)
+    def __init__(self, shortcuts_model: ShortcutsModel, iface):
+        QDialog.__init__(self, iface.mainWindow())
         self.setupUi(self)
+
+        self.iface = iface
 
         # Flag to handle initialization of new files
         self.__new_empty_file = False
@@ -404,6 +407,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         if dlg.result() == QDialog.DialogCode.Accepted:
             create_connection(service, dlg.new_name)
             self.__initialize_service_connections()
+            self.__refresh_qgis_connections()
 
     @pyqtSlot()
     def __edit_connection_clicked(self):
@@ -419,6 +423,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         connection_name = self.__connection_model.index_to_connection_key(index)
         edit_connection(connection_name, self)
         self.__initialize_service_connections(index)
+        self.__refresh_qgis_connections()
 
     @pyqtSlot()
     def __remove_connection_clicked(self):
@@ -437,6 +442,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             ):
                 remove_connection(connection_name)
                 self.__initialize_service_connections()
+                self.__refresh_qgis_connections()
 
     @pyqtSlot(QItemSelection, QItemSelection)
     def __conn_table_selection_changed(self, selected, deselected):
@@ -450,3 +456,6 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     @pyqtSlot(QItemSelection, QItemSelection)
     def __shortcuts_selection_changed(self, selected, deselected):
         self.shortcutRemoveButton.setEnabled(len(selected) > 0)
+
+    def __refresh_qgis_connections(self):
+        refresh_connections(self.iface)

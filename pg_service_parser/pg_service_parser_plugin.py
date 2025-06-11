@@ -106,7 +106,7 @@ class PgServiceParserPlugin:
         QgsSettingsTree.unregisterPluginTreeNode(PLUGIN_NAME)
 
     def run(self):
-        dlg = PgServiceDialog(self.shortcuts_model, self.iface.mainWindow())
+        dlg = PgServiceDialog(self.shortcuts_model, self.iface)
         dlg.exec()
 
     def copy_service(self, service_from: str, service_to: str):
