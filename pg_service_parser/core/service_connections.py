@@ -50,3 +50,16 @@ def edit_connection(connection_name: str, parent: QWidget) -> None:
 
         widget.refresh()  # To reflect the newly selected connection
         widget.btnEdit_clicked()
+
+
+def refresh_connections(iface):
+    # Refresh PG connections in the browser
+    # and in the Data Source Manager.
+    browser = iface.browserModel()
+    index = browser.findPath("pg:")
+    if index.isValid():
+        postgres_item = browser.dataItem(index)  # QgsDataCollectionItem
+
+        # Emits a signal that notifies the browser and the
+        # data source manager to refresh PG connections
+        postgres_item.refreshConnections()
