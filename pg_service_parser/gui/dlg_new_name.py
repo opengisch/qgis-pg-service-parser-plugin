@@ -40,3 +40,12 @@ class NewNameDialog(QDialog, DIALOG_UI):
                 self.new_name = self.txtNewName.text().strip().replace(" ", "-")
             elif self.__mode == EnumNewName.CONNECTION:
                 self.new_name = self.txtNewName.text().strip()
+
+
+def get_new_name(mode: EnumNewName, parent: QWidget) -> str:
+    dlg = NewNameDialog(mode, parent)
+    dlg.exec()
+    if dlg.result() == QDialog.DialogCode.Accepted:
+        return dlg.new_name
+    else:
+        return None
