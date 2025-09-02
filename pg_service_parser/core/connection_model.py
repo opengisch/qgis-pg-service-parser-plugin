@@ -51,9 +51,9 @@ class ServiceConnectionModel(QAbstractTableModel):
     def headerData(self, section, orientation, role):
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             if section == self.KEY_COL:
-                return "Connection name"
+                return self.tr("Connection name")
             elif section == self.VALUE_COL:
-                return "URI"
+                return self.tr("URI")
 
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
