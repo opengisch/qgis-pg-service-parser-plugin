@@ -46,13 +46,13 @@ class PgServiceParserPlugin:
 
         self.default_action = QAction(
             icon,
-            "PG service parser",
+            self.tr("PG service parser"),
             self.iface.mainWindow(),
         )
         self.default_action.triggered.connect(self.run)
 
-        self.iface.addPluginToDatabaseMenu("PG service parser", self.default_action)
-        self.menu = self.iface.mainWindow().getDatabaseMenu("PG service parser")
+        self.iface.addPluginToDatabaseMenu(self.tr("PG service parser"), self.default_action)
+        self.menu = self.iface.mainWindow().getDatabaseMenu(self.tr("PG service parser"))
         self.menu.setIcon(icon)
         self.menu.setToolTipsVisible(True)
 
@@ -65,15 +65,15 @@ class PgServiceParserPlugin:
         self.shortcuts_model.dataChanged.connect(self.build_menus)
 
         self.addServiceAction = QAction(
-            icon, "Create service from layer connection", self.iface.mainWindow()
+            icon, self.tr("Create service from layer connection"), self.iface.mainWindow()
         )
         self.addServiceAction.triggered.connect(self.addService)
         self.registerConnectionAction = QAction(
-            icon, "Register layer connection", self.iface.mainWindow()
+            icon, self.tr("Register layer connection"), self.iface.mainWindow()
         )
         self.registerConnectionAction.triggered.connect(self.registerConnection)
         self.switchToServiceAction = QAction(
-            icon, "Switch layer to service", self.iface.mainWindow()
+            icon, self.tr("Switch layer to service"), self.iface.mainWindow()
         )
         self.switchToServiceAction.triggered.connect(self.switchToService)
 
@@ -109,12 +109,14 @@ class PgServiceParserPlugin:
             for shortcut in self.shortcuts_model.shortcuts:
                 action = QAction(shortcut.name, self.iface.mainWindow())
                 action.setToolTip(
-                    self.tr(f"Copy service '{shortcut.service_from}' to '{shortcut.service_to}'.")
+                    self.tr("Copy service '{}' to '{}'.").format(
+                        shortcut.service_from, shortcut.service_to
+                    )
                 )
                 action.setEnabled(
                     _conf_path.exists()
-                    and shortcut.service_from in _services
-                    and shortcut.service_to in _services
+                    and shortcut.service_from in _services  # noqa W503
+                    and shortcut.service_to in _services  # noqa W503
                 )
                 action.triggered.connect(
                     lambda _triggered, _shortcut=shortcut: self.copy_service(
@@ -130,7 +132,7 @@ class PgServiceParserPlugin:
 
     def unload(self):
         self.iface.removeToolBarIcon(self.action)
-        self.iface.removePluginDatabaseMenu("PG service parser", self.default_action)
+        self.iface.removePluginDatabaseMenu(self.tr("PG service parser"), self.default_action)
         self.iface.layerTreeView().currentLayerChanged.disconnect(self.currentLayerChanged)
         self.iface.removeCustomActionForLayerType(self.addServiceAction)
         self.iface.removeCustomActionForLayerType(self.registerConnectionAction)
@@ -149,7 +151,8 @@ class PgServiceParserPlugin:
         if _conf_path.exists():
             copy_service_settings(service_from, service_to, _conf_path)
             self.iface.messageBar().pushMessage(
-                "PG service", f"PG service copied from '{service_from}' to '{service_to}'!"
+                self.tr("PG service"),
+                self.tr("PG service copied from '{}' to '{}'!").format(service_from, service_to),
             )
 
     def currentLayerChanged(self, layer):
@@ -184,8 +187,8 @@ class PgServiceParserPlugin:
         if not create_service(name, settings):
             QMessageBox.critical(
                 self.iface.mainWindow(),
-                "Error",
-                f"Could not add service {name}",
+                self.tr("Error"),
+                self.tr("Could not add service {}").format(name),
                 QMessageBox.Cancel,
             )
 
@@ -233,8 +236,8 @@ class PgServiceParserPlugin:
 
             if (
                 uri.database() != ""
-                and "dbname" in config
-                and uri.database() == config.get("dbname")
+                and "dbname" in config  # noqa W503
+                and uri.database() == config.get("dbname")  # noqa W503
             ):
                 uri.setDatabase("")
 
@@ -243,8 +246,8 @@ class PgServiceParserPlugin:
 
             if (
                 uri.password() != ""
-                and "password" in config
-                and uri.password() == config.get("password")
+                and "password" in config  # noqa W503
+                and uri.password() == config.get("password")  # noqa W503
             ):
                 uri.setPassword("")
 
@@ -257,5 +260,8 @@ class PgServiceParserPlugin:
             lyr.setDataSource(final_dst)
         else:
             QMessageBox.critical(
-                self.iface.mainWindow(), "Error", "No matching service found.", QMessageBox.Cancel
+                self.iface.mainWindow(),
+                self.tr("Error"),
+                self.tr("No matching service found."),
+                QMessageBox.Cancel,
             )

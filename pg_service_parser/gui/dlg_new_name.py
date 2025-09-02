@@ -23,15 +23,15 @@ class NewNameDialog(QDialog, DIALOG_UI):
         self.buttonBox.accepted.connect(self.__accepted)
 
         if self.__mode == EnumNewName.SERVICE:
-            self.setWindowTitle("Service name")
-            self.label.setText("Enter a service name")
-            self.txtNewName.setPlaceholderText("e.g., my-service")
+            self.setWindowTitle(self.tr("Service name"))
+            self.label.setText(self.tr("Enter a service name"))
+            self.txtNewName.setPlaceholderText(self.tr("e.g., my-service"))
             self.new_name = "my-service"
         elif self.__mode == EnumNewName.CONNECTION:
-            self.setWindowTitle("Connection name")
-            self.label.setText("Enter a connection name")
-            self.txtNewName.setPlaceholderText("e.g., My Service Connection")
-            self.new_name = f"{data} connection"
+            self.setWindowTitle(self.tr("Connection name"))
+            self.label.setText(self.tr("Enter a connection name"))
+            self.txtNewName.setPlaceholderText(self.tr("e.g., My Service Connection"))
+            self.new_name = self.tr("{} connection").format(data)
 
     @pyqtSlot()
     def __accepted(self):

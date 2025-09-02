@@ -38,10 +38,12 @@ class ServiceConfigDelegate(QStyledItemDelegate):
                 )
 
                 if widget.storageMode() == QgsFileWidget.StorageMode.GetFile:
-                    widget.setDialogTitle(config.get("title", "Select an existing file"))
+                    widget.setDialogTitle(config.get("title", self.tr("Select an existing file")))
                     widget.setFilter(config.get("filter", ""))
                 else:
-                    widget.setDialogTitle(config.get("title", "Select an existing folder"))
+                    widget.setDialogTitle(
+                        config.get("title", self.tr("Select an existing folder"))
+                    )
 
                 widget.fileChanged.connect(self.commit_and_close_editor)
                 return widget
