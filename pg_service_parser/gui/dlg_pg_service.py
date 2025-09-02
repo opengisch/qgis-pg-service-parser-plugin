@@ -208,7 +208,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboConnectionService.blockSignals(True)  # Avoid triggering custom slot while clearing
         self.cboConnectionService.clear()
         self.cboConnectionService.blockSignals(False)
-        self.cboConnectionService.addItems(service_names(self.__conf_file_path))
+        self.cboConnectionService.addItems([""] + service_names(self.__conf_file_path))
         self.cboConnectionService.setCurrentText(current_text)
 
     @pyqtSlot()
