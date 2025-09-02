@@ -2,7 +2,10 @@ import stat
 from pathlib import Path
 from typing import List, Optional
 
-from pg_service_parser.libs import pgserviceparser
+try:
+    import pgserviceparser
+except ModuleNotFoundError:
+    from pg_service_parser.libs import pgserviceparser
 
 
 def __make_file_writable(path: Path):
