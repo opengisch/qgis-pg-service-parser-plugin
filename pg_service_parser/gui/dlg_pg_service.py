@@ -38,14 +38,6 @@ DIALOG_UI = get_ui_class("pg_service_dialog.ui")
 EDIT_TAB_INDEX = 0
 DUPLICATE_TAB_INDEX = 1
 CONNECTION_TAB_INDEX = 2
-PERMISSION_ERROR_MESSAGE = """
-The PG service file is read-only and cannot be updated.
-
-To fix this, make sure you have enough permissions and retry.
-Otherwise, you can use PGSERVICEFILE or PGSYSCONFDIR environment
-variables to point to a PG service file located in a folder
-where you have write permissions.
-"""
 
 
 class PgServiceDialog(QDialog, DIALOG_UI):
@@ -67,8 +59,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         if not self.__conf_file_path.exists():
             self.btnCreateServiceFile.setIcon(QgsApplication.getThemeIcon("/mActionNewPage.svg"))
             self.btnCreateServiceFile.clicked.connect(self.__create_file_clicked)
-            self.lblConfFile.setText("Config file not found!")
-            not_found_tooltip = (
+            self.lblConfFile.setText(self.tr("Config file not found!"))
+            not_found_tooltip = self.tr(
                 "Create a config file at a default location or\n"
                 "set your PGSERVICEFILE environment variable and reopen the dialog."
             )
@@ -91,7 +83,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.shortcutRemoveButton.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.txtConfFile.setText(str(self.__conf_file_path))
         self.lblWarning.setVisible(False)
-        self.lblConfFile.setText("Config file path found at ")
+        self.lblConfFile.setText(self.tr("Config file path found at "))
         self.lblConfFile.setToolTip("")
         self.txtConfFile.setVisible(True)
         self.tabWidget.setEnabled(True)
@@ -137,11 +129,21 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             try:
                 add_new_service(dlg.new_name)
             except PermissionError:
-                self.bar.pushWarning("PG service", PERMISSION_ERROR_MESSAGE)
+                self.permissionWarning()
             else:
                 # Set flag to get a template after some initialization
                 self.__new_empty_file = True
                 self.__initialize_dialog()
+
+    def permissionWarning(self):
+        self.bar.pushWarning(self.tr("PG service"), self.tr("""
+The PG service file is read-only and cannot be updated.
+
+To fix this, make sure you have enough permissions and retry.
+Otherwise, you can use PGSERVICEFILE or PGSYSCONFDIR environment
+variables to point to a PG service file located in a folder
+where you have write permissions.
+"""))
 
     @pyqtSlot(bool)
     def __update_target_controls(self, checked):
@@ -151,7 +153,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
     def __update_add_settings_button(self):
         # Make sure to call this method whenever the settings are added/removed
-        enable = bool(self.__edit_model and self.__edit_model.rowCount() < len(SERVICE_SETTINGS))
+        enable = bool(self.__edit_model and self.__edit_model.rowCount() < len(SERVICE_SETTINGS()))
         self.btnAddSettings.setEnabled(enable)
 
     @pyqtSlot(int)
@@ -216,22 +218,30 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         # Validations
         if self.radCreate.isChecked():
             if not self.cboSourceService.currentText():
-                self.bar.pushInfo("PG service", "Select a valid source service and try again.")
+                self.bar.pushInfo(
+                    self.tr("PG service"),
+                    self.tr("Select a valid source service and try again.")
+                )
                 return
             elif not self.txtNewService.text().strip():
-                self.bar.pushInfo("PG service", "Enter a service name and try again.")
+                self.bar.pushInfo(
+                    self.tr("PG service"),
+                    self.tr("Enter a service name and try again.")
+                )
                 return
             elif self.txtNewService.text().strip() in service_names(self.__conf_file_path):
                 self.bar.pushWarning(
-                    "PG service",
-                    "Service name '{}' already exists! Change it and try again.".format(
+                    self.tr("PG service"),
+                    self.tr("Service name '{}' already exists! Change it and try again.").format(
                         self.txtNewService.text().strip()
                     ),
                 )
                 return
         elif self.radOverwrite.isChecked():
             if not self.cboTargetService.currentText():
-                self.bar.pushInfo("PG service", "Select a valid target service and try again.")
+                self.bar.pushInfo(
+                    self.tr("PG service"), self.tr("Select a valid target service and try again.")
+                )
                 return
 
         target_service = (
@@ -245,9 +255,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 self.cboSourceService.currentText(), target_service, self.__conf_file_path
             )
         except PermissionError:
-            self.bar.pushWarning("PG service", PERMISSION_ERROR_MESSAGE)
+            self.permissionWarning()
         else:
-            self.bar.pushSuccess("PG service", f"PG service copied to '{target_service}'!")
+            self.bar.pushSuccess(
+                self.tr("PG service"), self.tr("PG service copied to '{}'!").format(target_service)
+            )
             if self.radCreate.isChecked():
                 self.__initialize_duplicate_services()  # Reflect the newly added service
 
@@ -256,7 +268,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         target_service = self.cboTargetService.currentText()
 
         if not target_service:
-            self.bar.pushInfo("PG service", "Select a valid target service and try again.")
+            self.bar.pushInfo(
+                self.tr("PG service"), self.tr("Select a valid target service and try again.")
+            )
             return
         self.__shortcuts_model.add_shortcut(self.cboSourceService.currentText(), target_service)
         self.shortcutsTableView.resizeColumnsToContents()
@@ -271,8 +285,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         res = QMessageBox.question(
             self,
-            "Remove shortcut",
-            f"Are you sure you want to remove the shortcut '{shortcut}'?",
+            self.tr("Remove shortcut"),
+            self.tr("Are you sure you want to remove the shortcut '{}'?").format(shortcut),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -296,14 +310,13 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             if (
                 not QMessageBox.question(
                     self,
-                    "Pending edits",
-                    "There are pending edits for service '{}'. Are you sure you want to discard them?".format(
-                        self.__edit_model.service_name()
-                    ),
+                    self.tr("Pending edits"),
+                    self.tr(
+                        "There are pending edits for service '{}'. Are you sure you want to discard them?"
+                    ).format(self.__edit_model.service_name()),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,
-                )
-                == QMessageBox.StandardButton.Yes
+                ) == QMessageBox.StandardButton.Yes
             ):
 
                 self.cboEditService.blockSignals(True)
@@ -341,7 +354,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         if dlg.settings_to_add:
             settings = {
-                k: v["default"] for k, v in SERVICE_SETTINGS.items() if k in dlg.settings_to_add
+                k: v["default"] for k, v in SERVICE_SETTINGS().items() if k in dlg.settings_to_add
             }
             self.__edit_model.add_settings(settings)
             self.__update_add_settings_button()  # Settings added
@@ -354,12 +367,13 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             if (
                 QMessageBox.question(
                     self,
-                    "Remove service setting",
-                    f"Are you sure you want to remove the '{setting_key}' setting?",
+                    self.tr("Remove service setting"),
+                    self.tr("Are you sure you want to remove the '{}' setting?").format(
+                        setting_key
+                    ),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,
-                )
-                == QMessageBox.StandardButton.Yes
+                ) == QMessageBox.StandardButton.Yes
             ):
                 self.__edit_model.remove_setting(selected_indexes[0])
                 self.__update_add_settings_button()  # Settings removed
@@ -379,10 +393,13 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             invalid = self.__edit_model.invalid_settings()
             if invalid:
                 self.bar.pushWarning(
-                    "PG service",
-                    "Settings '{}' have invalid values. Adjust them and try again.".format(
+                    self.tr("PG service"),
+                    self.tr("Settings '{}' have invalid values. Adjust them and try again.").format(
                         "', '".join(invalid)
                     ),
+                    self.tr(
+                        "Settings '{}' have invalid values. Adjust them and try again."
+                    ).format("', '".join(invalid)),
                 )
                 return
 
@@ -392,12 +409,17 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                     target_service, self.__edit_model.service_config(), self.__conf_file_path
                 )
             except PermissionError:
-                self.bar.pushWarning("PG service", PERMISSION_ERROR_MESSAGE)
+                self.permissionWarning()
             else:
-                self.bar.pushSuccess("PG service", f"PG service '{target_service}' updated!")
+                self.bar.pushSuccess(
+                    self.tr("PG service"),
+                    self.tr("PG service '{}' updated!").format(target_service),
+                )
                 self.__edit_model.set_not_dirty()
         else:
-            self.bar.pushInfo("PG service", "Edit the service configuration and try again.")
+            self.bar.pushInfo(
+                self.tr("PG service"), self.tr("Edit the service configuration and try again.")
+            )
 
     @pyqtSlot(int)
     def __connection_service_changed(self, index):
@@ -451,12 +473,13 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             if (
                 QMessageBox.question(
                     self,
-                    "Remove service connection",
-                    f"Are you sure you want to remove the connection to '{connection_name}'?",
+                    self.tr("Remove service connection"),
+                    self.tr("Are you sure you want to remove the connection to '{}'?").format(
+                        connection_name
+                    ),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,
-                )
-                == QMessageBox.StandardButton.Yes
+                ) == QMessageBox.StandardButton.Yes
             ):
                 remove_connection(connection_name)
                 self.__initialize_service_connections()

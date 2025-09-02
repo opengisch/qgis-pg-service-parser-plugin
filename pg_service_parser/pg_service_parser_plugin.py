@@ -47,13 +47,13 @@ class PgServiceParserPlugin:
 
         self.default_action = QAction(
             icon,
-            "PG service parser",
+            self.tr("PG service parser"),
             self.iface.mainWindow(),
         )
         self.default_action.triggered.connect(self.run)
 
-        self.iface.addPluginToDatabaseMenu("PG service parser", self.default_action)
-        self.menu = self.iface.mainWindow().getDatabaseMenu("PG service parser")
+        self.iface.addPluginToDatabaseMenu(self.tr("PG service parser"), self.default_action)
+        self.menu = self.iface.mainWindow().getDatabaseMenu(self.tr("PG service parser"))
         self.menu.setIcon(icon)
         self.menu.setToolTipsVisible(True)
 
@@ -66,15 +66,15 @@ class PgServiceParserPlugin:
         self.shortcuts_model.dataChanged.connect(self.build_menus)
 
         self.add_service_action = QAction(
-            icon, "Create PG service from layer connection", self.iface.mainWindow()
+            icon, self.tr("Create PG service from layer connection"), self.iface.mainWindow()
         )
         self.add_service_action.triggered.connect(self.add_service)
         self.register_connection_action = QAction(
-            icon, "Register layer connection as QGIS connection", self.iface.mainWindow()
+            icon, self.tr("Register layer connection as QGIS connection"), self.iface.mainWindow()
         )
         self.register_connection_action.triggered.connect(self.register_connection)
         self.switch_to_service_action = QAction(
-            icon, "Switch layer to PG service", self.iface.mainWindow()
+            icon, self.tr("Switch layer to PG service"), self.iface.mainWindow()
         )
         self.switch_to_service_action.triggered.connect(self.switch_to_service)
 
@@ -112,12 +112,14 @@ class PgServiceParserPlugin:
             for shortcut in self.shortcuts_model.shortcuts:
                 action = QAction(shortcut.name, self.iface.mainWindow())
                 action.setToolTip(
-                    f"Copy service '{shortcut.service_from}' to '{shortcut.service_to}'."
+                    self.tr("Copy service '{}' to '{}'.").format(
+                        shortcut.service_from, shortcut.service_to
+                    )
                 )
                 action.setEnabled(
                     _conf_path.exists()
-                    and shortcut.service_from in _services
-                    and shortcut.service_to in _services
+                    and shortcut.service_from in _services  # noqa W503
+                    and shortcut.service_to in _services  # noqa W503
                 )
                 action.triggered.connect(
                     lambda _triggered, _shortcut=shortcut: self.copy_service(
@@ -133,7 +135,7 @@ class PgServiceParserPlugin:
 
     def unload(self):
         self.iface.removeToolBarIcon(self.action)
-        self.iface.removePluginDatabaseMenu("PG service parser", self.default_action)
+        self.iface.removePluginDatabaseMenu(self.tr("PG service parser"), self.default_action)
         self.iface.layerTreeView().currentLayerChanged.disconnect(self.current_layer_changed)
         self.iface.removeCustomActionForLayerType(self.add_service_action)
         self.iface.removeCustomActionForLayerType(self.register_connection_action)
@@ -157,8 +159,8 @@ class PgServiceParserPlugin:
         if _conf_path.exists():
             copy_service_settings(service_from, service_to, _conf_path)
             self.iface.messageBar().pushMessage(
-                "PG service",
-                f"PG service copied from '{service_from}' to '{service_to}'!",
+                self.tr("PG service"),
+                self.tr("PG service copied from '{}' to '{}'!").format(service_from, service_to),
             )
 
     def current_layer_changed(self, layer):
@@ -217,7 +219,9 @@ class PgServiceParserPlugin:
         if create_service(name, settings):
             self.open(name)
         else:
-            self.iface.messageBar().pushMessage("PG service", f"Could not add service {name}")
+            self.iface.messageBar().pushMessage(
+                self.tr("PG service"), self.tr("Could not add service {}").format(name)
+            )
 
     def register_connection(self):
         QgsDataSourceUri(self.iface.activeLayer().source())
@@ -286,4 +290,7 @@ class PgServiceParserPlugin:
         if final_dst != "":
             lyr.setDataSource(final_dst)
         else:
-            self.iface.messageBar().pushMessage("PG service", "No matching service found.")
+            self.iface.messageBar().pushMessage(
+                self.tr("PG service"),
+                self.tr("No matching service found."),
+            )

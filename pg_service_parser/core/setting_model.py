@@ -18,7 +18,9 @@ class ServiceConfigModel(QAbstractTableModel):
         self.__service_name = service_name
         self.__model_data = service_config
         self.__original_data = service_config.copy()
-        self.__settings_data = SERVICE_SETTINGS  # Read-only dict with further info about settings
+        self.__settings_data = (
+            SERVICE_SETTINGS()
+        )  # Read-only dict with further info about settings
         self.__dirty = False
 
     def rowCount(self, parent=QModelIndex()):
