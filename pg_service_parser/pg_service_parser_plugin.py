@@ -1,18 +1,24 @@
 import os
 from pathlib import Path
 
-from qgis.core import NULL, QgsSettingsTree
+from qgis.core import NULL, Qgis, QgsDataSourceUri, QgsProviderRegistry, QgsSettingsTree
 from qgis.PyQt.QtCore import QCoreApplication, QLocale, QSettings, QTranslator
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QMenu, QToolButton
+from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton
 
 from pg_service_parser.core.copy_shortcuts import ShortcutsModel
 from pg_service_parser.core.pg_service_parser_wrapper import (
+    __create_service as create_service,
+)
+from pg_service_parser.core.pg_service_parser_wrapper import (
     conf_path,
     copy_service_settings,
+    service_config,
     service_names,
 )
 from pg_service_parser.core.plugin_settings import PLUGIN_NAME
+from pg_service_parser.core.service_connections import refresh_connections
+from pg_service_parser.gui.dlg_new_name import EnumNewName, get_new_name
 from pg_service_parser.gui.dlg_pg_service import PgServiceDialog
 
 
@@ -40,13 +46,13 @@ class PgServiceParserPlugin:
 
         self.default_action = QAction(
             icon,
-            "PG service parser",
+            self.tr("PG service parser"),
             self.iface.mainWindow(),
         )
         self.default_action.triggered.connect(self.run)
 
-        self.iface.addPluginToDatabaseMenu("PG service parser", self.default_action)
-        self.menu = self.iface.mainWindow().getDatabaseMenu("PG service parser")
+        self.iface.addPluginToDatabaseMenu(self.tr("PG service parser"), self.default_action)
+        self.menu = self.iface.mainWindow().getDatabaseMenu(self.tr("PG service parser"))
         self.menu.setIcon(icon)
         self.menu.setToolTipsVisible(True)
 
@@ -57,6 +63,30 @@ class PgServiceParserPlugin:
 
         self.shortcuts_model = ShortcutsModel(self.iface.mainWindow())
         self.shortcuts_model.dataChanged.connect(self.build_menus)
+
+        self.addServiceAction = QAction(
+            icon, self.tr("Create service from layer connection"), self.iface.mainWindow()
+        )
+        self.addServiceAction.triggered.connect(self.addService)
+        self.registerConnectionAction = QAction(
+            icon, self.tr("Register layer connection"), self.iface.mainWindow()
+        )
+        self.registerConnectionAction.triggered.connect(self.registerConnection)
+        self.switchToServiceAction = QAction(
+            icon, self.tr("Switch layer to service"), self.iface.mainWindow()
+        )
+        self.switchToServiceAction.triggered.connect(self.switchToService)
+
+        self.iface.addCustomActionForLayerType(
+            self.addServiceAction, "", Qgis.LayerType.Vector, True
+        )
+        self.iface.addCustomActionForLayerType(
+            self.registerConnectionAction, "", Qgis.LayerType.Vector, True
+        )
+        self.iface.addCustomActionForLayerType(
+            self.switchToServiceAction, "", Qgis.LayerType.Vector, True
+        )
+        self.iface.layerTreeView().currentLayerChanged.connect(self.currentLayerChanged)
 
         self.build_menus()
 
@@ -79,12 +109,14 @@ class PgServiceParserPlugin:
             for shortcut in self.shortcuts_model.shortcuts:
                 action = QAction(shortcut.name, self.iface.mainWindow())
                 action.setToolTip(
-                    self.tr(f"Copy service '{shortcut.service_from}' to '{shortcut.service_to}'.")
+                    self.tr("Copy service '{}' to '{}'.").format(
+                        shortcut.service_from, shortcut.service_to
+                    )
                 )
                 action.setEnabled(
                     _conf_path.exists()
-                    and shortcut.service_from in _services
-                    and shortcut.service_to in _services
+                    and shortcut.service_from in _services  # noqa W503
+                    and shortcut.service_to in _services  # noqa W503
                 )
                 action.triggered.connect(
                     lambda _triggered, _shortcut=shortcut: self.copy_service(
@@ -100,7 +132,12 @@ class PgServiceParserPlugin:
 
     def unload(self):
         self.iface.removeToolBarIcon(self.action)
-        self.iface.removePluginDatabaseMenu("PG service parser", self.default_action)
+        self.iface.removePluginDatabaseMenu(self.tr("PG service parser"), self.default_action)
+        self.iface.layerTreeView().currentLayerChanged.disconnect(self.currentLayerChanged)
+        self.iface.removeCustomActionForLayerType(self.addServiceAction)
+        self.iface.removeCustomActionForLayerType(self.registerConnectionAction)
+        self.iface.removeCustomActionForLayerType(self.switchToServiceAction)
+
         self.menu.clear()
         del self.menu
         QgsSettingsTree.unregisterPluginTreeNode(PLUGIN_NAME)
@@ -114,5 +151,117 @@ class PgServiceParserPlugin:
         if _conf_path.exists():
             copy_service_settings(service_from, service_to, _conf_path)
             self.iface.messageBar().pushMessage(
-                "PG service", f"PG service copied from '{service_from}' to '{service_to}'!"
+                self.tr("PG service"),
+                self.tr("PG service copied from '{}' to '{}'!").format(service_from, service_to),
+            )
+
+    def currentLayerChanged(self, layer):
+        isPostgres = layer is not None and layer.providerType() == "postgres"
+        noService = isPostgres and QgsDataSourceUri(layer.source()).service() == ""
+        self.addServiceAction.setVisible(noService)
+        self.switchToServiceAction.setVisible(noService)
+        self.registerConnectionAction.setVisible(isPostgres)
+
+    def addService(self):
+        uri = QgsDataSourceUri(self.iface.activeLayer().source())
+        name = uri.service() if uri.service() != "" else self.iface.activeLayer().name()
+
+        name = get_new_name(EnumNewName.SERVICE, self.iface.mainWindow(), name)
+        if name is None:
+            return
+
+        settings = {}
+        if uri.host() != "":
+            settings["host"] = uri.host()
+        if uri.port() != "" and uri.port() != "5432":
+            settings["port"] = uri.port()
+        if uri.database() != "":
+            settings["dbname"] = uri.database()
+        if uri.username() != "":
+            settings["user"] = uri.username()
+        if uri.password() != "":
+            settings["password"] = uri.password()
+        if uri.sslMode() != QgsDataSourceUri.SslPrefer:
+            settings["sslmode"] = QgsDataSourceUri.encodeSslMode(uri.sslMode())
+
+        if not create_service(name, settings):
+            QMessageBox.critical(
+                self.iface.mainWindow(),
+                self.tr("Error"),
+                self.tr("Could not add service {}").format(name),
+                QMessageBox.Cancel,
+            )
+
+    def registerConnection(self):
+        uri = QgsDataSourceUri(self.iface.activeLayer().source())
+        name = uri.service() if uri.service() != "" else self.iface.activeLayer().name()
+
+        name = get_new_name(EnumNewName.CONNECTION, self.iface.mainWindow(), name)
+        if name is None:
+            return
+
+        provider = QgsProviderRegistry.instance().providerMetadata("postgres")
+        conn = provider.createConnection(self.iface.activeLayer().source(), {})
+        provider.saveConnection(conn, name)
+
+        refresh_connections(self.iface)
+
+    def switchToService(self):
+        lyr = self.iface.activeLayer()
+        src = lyr.source()
+        uri = QgsDataSourceUri(src)
+        if uri.service() != "":
+            return
+
+        final_dst = src
+        final_service = ""
+
+        for name in service_names():
+            # remove everything that matches the service and keep the shortest uri
+
+            uri = QgsDataSourceUri(src)
+            config = service_config(name)
+
+            uri.setService(name)
+
+            if uri.host() != "" and "host" in config and uri.host() == config.get("host"):
+                uri.setHost("")
+
+            if uri.port() != "" and "port" in config and uri.port() == config.get("port"):
+                uri.setPort("")
+
+            sslmode = QgsDataSourceUri.encodeSslMode(uri.sslMode())
+            if sslmode != "sslprefer" and "sslmode" in config and sslmode == config.get("sslmode"):
+                uri.setSslMode(QgsDataSourceUri.SslPrefer)
+
+            if (
+                uri.database() != ""
+                and "dbname" in config  # noqa W503
+                and uri.database() == config.get("dbname")  # noqa W503
+            ):
+                uri.setDatabase("")
+
+            if uri.username() != "" and "user" in config and uri.username() == config.get("user"):
+                uri.setUsername("")
+
+            if (
+                uri.password() != ""
+                and "password" in config  # noqa W503
+                and uri.password() == config.get("password")  # noqa W503
+            ):
+                uri.setPassword("")
+
+            dst = uri.uri()
+            if len(dst) - len(name) < len(final_dst) - len(final_service):
+                final_dst = dst
+                final_service = name
+
+        if final_dst != "":
+            lyr.setDataSource(final_dst)
+        else:
+            QMessageBox.critical(
+                self.iface.mainWindow(),
+                self.tr("Error"),
+                self.tr("No matching service found."),
+                QMessageBox.Cancel,
             )

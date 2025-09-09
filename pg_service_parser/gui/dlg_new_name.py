@@ -23,15 +23,15 @@ class NewNameDialog(QDialog, DIALOG_UI):
         self.buttonBox.accepted.connect(self.__accepted)
 
         if self.__mode == EnumNewName.SERVICE:
-            self.setWindowTitle("Service name")
-            self.label.setText("Enter a service name")
-            self.txtNewName.setPlaceholderText("e.g., my-service")
+            self.setWindowTitle(self.tr("Service name"))
+            self.label.setText(self.tr("Enter a service name"))
+            self.txtNewName.setPlaceholderText(self.tr("e.g., my-service"))
             self.new_name = "my-service"
         elif self.__mode == EnumNewName.CONNECTION:
-            self.setWindowTitle("Connection name")
-            self.label.setText("Enter a connection name")
-            self.txtNewName.setPlaceholderText("e.g., My Service Connection")
-            self.new_name = f"{data} connection"
+            self.setWindowTitle(self.tr("Connection name"))
+            self.label.setText(self.tr("Enter a connection name"))
+            self.txtNewName.setPlaceholderText(self.tr("e.g., My Service Connection"))
+            self.new_name = self.tr("{} connection").format(data)
 
     @pyqtSlot()
     def __accepted(self):
@@ -40,3 +40,12 @@ class NewNameDialog(QDialog, DIALOG_UI):
                 self.new_name = self.txtNewName.text().strip().replace(" ", "-")
             elif self.__mode == EnumNewName.CONNECTION:
                 self.new_name = self.txtNewName.text().strip()
+
+
+def get_new_name(mode: EnumNewName, parent: QWidget, data: str = "") -> str:
+    dlg = NewNameDialog(mode, parent, data)
+    dlg.exec()
+    if dlg.result() == QDialog.DialogCode.Accepted:
+        return dlg.new_name
+    else:
+        return None

@@ -19,7 +19,7 @@ class ServiceSettingsDialog(QDialog, DIALOG_UI):
         self.__selection_changed()  # Initialize button status
 
         # Load data
-        for setting, data in SERVICE_SETTINGS.items():
+        for setting, data in SERVICE_SETTINGS().items():
             item = QListWidgetItem(setting)
             if setting in used_settings:
                 item.setFlags(
