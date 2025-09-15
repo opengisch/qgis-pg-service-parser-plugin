@@ -73,6 +73,10 @@ def write_service(
     pgserviceparser.write_service(service_name, settings, conf_file_path)
 
 
+def write_service_to_text(service_name: str, settings: dict) -> str:
+    return pgserviceparser.write_service_to_text(service_name, settings)
+
+
 def __create_service(
     service_name: str, settings: dict, conf_file_path: Optional[Path] = None
 ) -> bool:

@@ -1,7 +1,13 @@
 from qgis.core import QgsApplication
 from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import QItemSelection, QModelIndex, Qt, pyqtSlot
-from qgis.PyQt.QtWidgets import QDialog, QHeaderView, QMessageBox, QSizePolicy
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QDialog,
+    QHeaderView,
+    QMessageBox,
+    QSizePolicy,
+)
 
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
 from pg_service_parser.core.connection_model import ServiceConnectionModel
@@ -13,6 +19,7 @@ from pg_service_parser.core.pg_service_parser_wrapper import (
     service_config,
     service_names,
     write_service,
+    write_service_to_text,
 )
 from pg_service_parser.core.service_connections import (
     create_connection,
@@ -76,6 +83,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         self.btnAddSettings.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
         self.btnRemoveSetting.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
+        self.btnCopySettings.setIcon(QgsApplication.getThemeIcon("/mActionEditCopy.svg"))
         self.btnAddConnection.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
         self.btnEditConnection.setIcon(QgsApplication.getThemeIcon("/symbologyEdit.svg"))
         self.btnRemoveConnection.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
@@ -101,6 +109,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboEditService.currentIndexChanged.connect(self.__edit_service_changed)
         self.btnAddSettings.clicked.connect(self.__add_settings_clicked)
         self.btnRemoveSetting.clicked.connect(self.__remove_setting_clicked)
+        self.btnCopySettings.clicked.connect(self.__copy_settings_clicked)
         self.btnUpdateService.clicked.connect(self.__update_service_clicked)
         self.cboConnectionService.currentIndexChanged.connect(self.__connection_service_changed)
         self.btnAddConnection.clicked.connect(self.__add_connection_clicked)
@@ -354,6 +363,15 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             ):
                 self.__edit_model.remove_setting(selected_indexes[0])
                 self.__update_add_settings_button()  # Settings removed
+
+    @pyqtSlot()
+    def __copy_settings_clicked(self):
+        service_name = self.cboEditService.currentText()
+        settings_text = write_service_to_text(service_name, self.__edit_model.service_config())
+        QApplication.clipboard().setText(settings_text)
+        self.bar.pushSuccess(
+            "PG service", f"PG service '{service_name}' settings copied to clipboard!"
+        )
 
     @pyqtSlot()
     def __update_service_clicked(self):
