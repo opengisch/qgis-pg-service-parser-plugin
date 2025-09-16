@@ -242,9 +242,9 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabCopy">
+     <widget class="QWidget" name="tabDuplicate">
       <attribute name="title">
-       <string>Copy Service</string>
+       <string>Duplicate Service</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="1" column="0">
@@ -261,16 +261,16 @@
         </spacer>
        </item>
        <item row="1" column="1">
-        <widget class="QPushButton" name="btnCopyService">
+        <widget class="QPushButton" name="btnDuplicateService">
          <property name="text">
-          <string>Copy service</string>
+          <string>Duplicate service</string>
          </property>
         </widget>
        </item>
        <item row="3" column="0" colspan="2">
         <widget class="QGroupBox" name="groupBox">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sortcuts allow to copy services directly from the plugin icon in the toolbar or from the menu entry.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sortcuts allow to duplicate services directly from the plugin icon in the toolbar or from the menu entry.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="title">
           <string>Shortcuts</string>
