@@ -36,7 +36,7 @@ from pg_service_parser.utils import get_ui_class
 
 DIALOG_UI = get_ui_class("pg_service_dialog.ui")
 EDIT_TAB_INDEX = 0
-COPY_TAB_INDEX = 1
+DUPLICATE_TAB_INDEX = 1
 CONNECTION_TAB_INDEX = 2
 PERMISSION_ERROR_MESSAGE = """
 The PG service file is read-only and cannot be updated.
@@ -101,7 +101,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.shortcutRemoveButton.setEnabled(False)
 
         self.radOverwrite.toggled.connect(self.__update_target_controls)
-        self.btnCopyService.clicked.connect(self.__copy_service)
+        self.btnDuplicateService.clicked.connect(self.__duplicate_service)
         self.shortcutAddButton.clicked.connect(self.__create_copy_shortcut)
         self.shortcutRemoveButton.clicked.connect(self.__remove_copy_shortcut)
         self.cboSourceService.currentIndexChanged.connect(self.__source_service_changed)
@@ -118,7 +118,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.tblServiceConnections.doubleClicked.connect(self.__edit_double_clicked_connection)
 
         self.__initialize_edit_services()
-        self.__initialize_copy_services()
+        self.__initialize_duplicate_services()
         self.__initialize_connection_services()
         self.__update_target_controls(True)
         self.__update_add_settings_button()
@@ -170,7 +170,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         self.cboTargetService.setCurrentText(current_text)
 
-    def __initialize_copy_services(self):
+    def __initialize_duplicate_services(self):
         current_text = self.cboSourceService.currentText()  # Remember latest currentText
         self.cboSourceService.blockSignals(True)  # Avoid triggering custom slot while clearing
         self.cboSourceService.clear()
@@ -212,7 +212,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.cboConnectionService.setCurrentText(current_text)
 
     @pyqtSlot()
-    def __copy_service(self):
+    def __duplicate_service(self):
         # Validations
         if self.radCreate.isChecked():
             if not self.cboSourceService.currentText():
@@ -249,7 +249,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         else:
             self.bar.pushSuccess("PG service", f"PG service copied to '{target_service}'!")
             if self.radCreate.isChecked():
-                self.__initialize_copy_services()  # Reflect the newly added service
+                self.__initialize_duplicate_services()  # Reflect the newly added service
 
     @pyqtSlot()
     def __create_copy_shortcut(self):
@@ -281,8 +281,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
     @pyqtSlot(int)
     def __current_tab_changed(self, index):
-        if index == COPY_TAB_INDEX:
-            # self.__initialize_copy_services()
+        if index == DUPLICATE_TAB_INDEX:
+            # self.__initialize_duplicate_services()
             pass  # For now, services to be copied won't be altered in other tabs
         elif index == EDIT_TAB_INDEX:
             self.__initialize_edit_services()
