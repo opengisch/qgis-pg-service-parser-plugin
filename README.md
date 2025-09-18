@@ -49,7 +49,7 @@ You can create QGIS connections to a PG database, directly from the PG services 
 
 #### pgserviceparser library
 
-This plugin uses the [pgserviceparser](https://github.com/opengisch/pgserviceparser) library, which is also available as a [PYPI package](https://pypi.org/project/pgserviceparser/).
+This plugin uses the [pgserviceparser](https://github.com/opengisch/pgserviceparser) library, which is available as a standalone package on [PYPI](https://pypi.org/project/pgserviceparser/).
 
 
 
