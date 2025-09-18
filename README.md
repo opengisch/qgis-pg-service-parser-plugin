@@ -10,6 +10,12 @@ QGIS v3 plugin to view, edit or copy PG service (i.e., `pg_service.conf`) entrie
 This plugin is distributed under the [GNU GPL v3 license](https://github.com/opengisch/qgis-pg-service-parser-plugin/blob/main/LICENSE).
 
 
+### Create a pg_service.conf file
+
+If you don't have a `pg_service.conf` file, the plugin allows you to create one at a default location.
+
+<img width="603" height="133" alt="image" src="https://github.com/user-attachments/assets/fdd6a551-12e3-456d-b116-16fe29a23aa7" />
+
 
 ### pg_service.conf location
 
@@ -21,24 +27,29 @@ Clients like QGIS will directly read your `pg_service.conf` file from any of the
 
 ### Edit PG service entries
 
-<img src="https://raw.githubusercontent.com/opengisch/qgis-pg-service-parser-plugin/main/images/edit_service.png" alt="Edit service"/>
+<img width="560" height="422" alt="image" src="https://github.com/user-attachments/assets/50629923-8684-4da9-b6dd-1a2797701dfe" />
 
+### Duplicate PG service entries
 
-### Copy PG service entries
+If you want to duplicate a service, choose whether to copy/clone the service into a new service or to overwrite an existing one.
 
-<img src="https://raw.githubusercontent.com/opengisch/qgis-pg-service-parser-plugin/main/images/copy_service.png" alt="Copy service"/>
+<img width="560" height="446" alt="image" src="https://github.com/user-attachments/assets/a6120c41-c0fd-45e6-a41e-7b7cc72a57c0" />
 
+If you perform the **overwrite** operation on a regular basis (e.g., switching from a service definition to another, while preserving the name), you can add `Shortcuts`, which give you a handy way to execute the same overwrite from the plugin icon or from the `Database` menu.
+
+<img width="377" height="168" alt="image" src="https://github.com/user-attachments/assets/ce2e8415-b231-46bc-aa38-d1625c4282ac" />
 
 ### QGIS Connection to a PG service
 
-<img src="https://raw.githubusercontent.com/opengisch/qgis-pg-service-parser-plugin/main/images/qgis_connection_to_service.png" alt="QGIS Connection to service"/>
+You can create QGIS connections to a PG database, directly from the PG services that you edit.
 
+<img width="560" height="422" alt="image" src="https://github.com/user-attachments/assets/4d1a9d0a-55fa-4bea-a633-2a9b1fe21607" />
 
 ### For devs
 
 #### pgserviceparser library
 
-This plugin uses the [pgserviceparser](https://github.com/opengisch/pgserviceparser) library. It's also available as a [PYPI package](https://pypi.org/project/pgserviceparser/).
+This plugin uses the [pgserviceparser](https://github.com/opengisch/pgserviceparser) library, which is available as a standalone package on [PYPI](https://pypi.org/project/pgserviceparser/).
 
 
 
