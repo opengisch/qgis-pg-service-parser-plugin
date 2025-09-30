@@ -136,14 +136,19 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 self.__initialize_dialog()
 
     def permissionWarning(self):
-        self.bar.pushWarning(self.tr("PG service"), self.tr("""
+        self.bar.pushWarning(
+            self.tr("PG service"),
+            self.tr(
+                """
 The PG service file is read-only and cannot be updated.
 
 To fix this, make sure you have enough permissions and retry.
 Otherwise, you can use PGSERVICEFILE or PGSYSCONFDIR environment
 variables to point to a PG service file located in a folder
 where you have write permissions.
-"""))
+"""
+            ),
+        )
 
     @pyqtSlot(bool)
     def __update_target_controls(self, checked):
@@ -219,14 +224,12 @@ where you have write permissions.
         if self.radCreate.isChecked():
             if not self.cboSourceService.currentText():
                 self.bar.pushInfo(
-                    self.tr("PG service"),
-                    self.tr("Select a valid source service and try again.")
+                    self.tr("PG service"), self.tr("Select a valid source service and try again.")
                 )
                 return
             elif not self.txtNewService.text().strip():
                 self.bar.pushInfo(
-                    self.tr("PG service"),
-                    self.tr("Enter a service name and try again.")
+                    self.tr("PG service"), self.tr("Enter a service name and try again.")
                 )
                 return
             elif self.txtNewService.text().strip() in service_names(self.__conf_file_path):
@@ -316,7 +319,8 @@ where you have write permissions.
                     ).format(self.__edit_model.service_name()),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,
-                ) == QMessageBox.StandardButton.Yes
+                )
+                == QMessageBox.StandardButton.Yes
             ):
 
                 self.cboEditService.blockSignals(True)
@@ -373,7 +377,8 @@ where you have write permissions.
                     ),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,
-                ) == QMessageBox.StandardButton.Yes
+                )
+                == QMessageBox.StandardButton.Yes
             ):
                 self.__edit_model.remove_setting(selected_indexes[0])
                 self.__update_add_settings_button()  # Settings removed
@@ -394,9 +399,9 @@ where you have write permissions.
             if invalid:
                 self.bar.pushWarning(
                     self.tr("PG service"),
-                    self.tr("Settings '{}' have invalid values. Adjust them and try again.").format(
-                        "', '".join(invalid)
-                    ),
+                    self.tr(
+                        "Settings '{}' have invalid values. Adjust them and try again."
+                    ).format("', '".join(invalid)),
                     self.tr(
                         "Settings '{}' have invalid values. Adjust them and try again."
                     ).format("', '".join(invalid)),
@@ -479,7 +484,8 @@ where you have write permissions.
                     ),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,
-                ) == QMessageBox.StandardButton.Yes
+                )
+                == QMessageBox.StandardButton.Yes
             ):
                 remove_connection(connection_name)
                 self.__initialize_service_connections()
