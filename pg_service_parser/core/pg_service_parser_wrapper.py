@@ -1,6 +1,6 @@
 import stat
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from pg_service_parser.libs import pgserviceparser
 
@@ -51,8 +51,9 @@ def conf_path(create_if_missing: Optional[bool] = False) -> Path:
     return pgserviceparser.conf_path(create_if_missing)
 
 
-def service_names(conf_file_path: Optional[Path] = None) -> List[str]:
-    return pgserviceparser.service_names(conf_file_path)
+def service_names(conf_file_path: Optional[Path] = None, sorted_alphabetically=False) -> list[str]:
+    res = pgserviceparser.service_names(conf_file_path)
+    return sorted(res, key=str.lower) if sorted_alphabetically else res
 
 
 @__whenReadOnlyTryToAddWritePermission
