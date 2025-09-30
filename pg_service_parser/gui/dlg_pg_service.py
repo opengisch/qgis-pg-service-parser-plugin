@@ -1,6 +1,13 @@
 from qgis.core import QgsApplication
 from qgis.gui import QgsMessageBar
-from qgis.PyQt.QtCore import QItemSelection, QModelIndex, Qt, pyqtSlot
+from qgis.PyQt.QtCore import (
+    QEvent,
+    QItemSelection,
+    QModelIndex,
+    QObject,
+    Qt,
+    pyqtSlot,
+)
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QDialog,
@@ -206,8 +213,38 @@ where you have write permissions.
         self.cboEditService.blockSignals(True)  # Avoid triggering custom slot while clearing
         self.cboEditService.clear()
         self.cboEditService.blockSignals(False)
-        self.cboEditService.addItems(service_names(self.__conf_file_path))
-        self.cboEditService.setCurrentText(current_text)
+        self.cboEditService.addItems(
+            service_names(self.__conf_file_path, sorted_alphabetically=True)
+        )
+        if current_text:
+            self.cboEditService.setCurrentIndex(self.cboEditService.findText(current_text))
+        self.__make_combo_box_searchable(self.cboEditService)
+
+    def __make_combo_box_searchable(self, combo_box, allow_custom_name=False):
+        """
+        :param combo_box: Combo box object
+        :param allow_custom_name: If False, the combo box should only display
+                                  existing names when it has no focus
+        """
+        # Borrowed from https://gist.github.com/rBrenick/cb4c29f8a2d094e9df3e321a87eceb04
+        from qgis.PyQt.QtCore import QSortFilterProxyModel
+        from qgis.PyQt.QtWidgets import QComboBox, QCompleter
+
+        combo_box.setFocusPolicy(Qt.StrongFocus)
+        combo_box.setEditable(True)
+        combo_box.setInsertPolicy(QComboBox.NoInsert)
+
+        filter_model = QSortFilterProxyModel(combo_box)
+        filter_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        filter_model.setSourceModel(combo_box.model())
+
+        completer = QCompleter(filter_model, combo_box)
+        completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
+        combo_box.setCompleter(completer)
+        combo_box.lineEdit().textEdited.connect(filter_model.setFilterFixedString)
+
+        if not allow_custom_name:
+            combo_box.installEventFilter(ServiceComboBoxLostFocusFilter(combo_box, self))
 
     def __initialize_connection_services(self):
         self.__connection_model = None
@@ -324,7 +361,9 @@ where you have write permissions.
             ):
 
                 self.cboEditService.blockSignals(True)
-                self.cboEditService.setCurrentText(self.__edit_model.service_name())
+                self.cboEditService.setCurrentIndex(
+                    self.cboEditService.findText(self.__edit_model.service_name())
+                )
                 self.cboEditService.blockSignals(False)
                 return
 
@@ -506,3 +545,26 @@ where you have write permissions.
 
     def __refresh_qgis_connections(self):
         refresh_connections(self.iface)
+
+
+class ServiceComboBoxLostFocusFilter(QObject):
+    def __init__(self, combo_box, parent):
+        super().__init__(parent)
+        self.__combo_box = combo_box
+
+    def eventFilter(self, object, event) -> bool:
+        if event.type() == QEvent.FocusOut:
+            if object == self.__combo_box:
+                # If a service combo box lost focus, we make sure
+                # the text displayed corresponds to the currently
+                # selected service (and not to the current edited text).
+                self.reset_service()
+        return False
+
+    def reset_service(self):
+        if self.__combo_box.currentText() != self.__combo_box.itemText(
+            self.__combo_box.currentIndex()
+        ):
+            self.__combo_box.blockSignals(True)  # Avoid triggering custom slot while resetting
+            self.__combo_box.setCurrentIndex(self.__combo_box.currentIndex())
+            self.__combo_box.blockSignals(False)
