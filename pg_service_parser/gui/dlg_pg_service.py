@@ -5,11 +5,14 @@ from qgis.PyQt.QtCore import (
     QItemSelection,
     QModelIndex,
     QObject,
+    QSortFilterProxyModel,
     Qt,
     pyqtSlot,
 )
 from qgis.PyQt.QtWidgets import (
     QApplication,
+    QComboBox,
+    QCompleter,
     QDialog,
     QHeaderView,
     QMessageBox,
@@ -176,21 +179,29 @@ where you have write permissions.
         current_text = current_text if self.cboSourceService.currentText() != current_text else ""
 
         self.cboTargetService.clear()
-        self.cboTargetService.addItems([""] + service_names(self.__conf_file_path))
+        self.cboTargetService.addItems(
+            [""] + service_names(self.__conf_file_path, sorted_alphabetically=True)
+        )
 
         model = self.cboTargetService.model()
         item = model.item(index + 1)  # Account for the first (empty) item
         item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)  # Disable mirror item
 
-        self.cboTargetService.setCurrentText(current_text)
+        if current_text:
+            self.cboTargetService.setCurrentIndex(self.cboTargetService.findText(current_text))
+        self.__make_combo_box_searchable(self.cboTargetService)
 
     def __initialize_duplicate_services(self):
         current_text = self.cboSourceService.currentText()  # Remember latest currentText
         self.cboSourceService.blockSignals(True)  # Avoid triggering custom slot while clearing
         self.cboSourceService.clear()
         self.cboSourceService.blockSignals(False)
-        self.cboSourceService.addItems(service_names(self.__conf_file_path))
-        self.cboSourceService.setCurrentText(current_text)
+        self.cboSourceService.addItems(
+            service_names(self.__conf_file_path, sorted_alphabetically=True)
+        )
+        if current_text:
+            self.cboSourceService.setCurrentIndex(self.cboSourceService.findText(current_text))
+        self.__make_combo_box_searchable(self.cboSourceService)
 
         self.shortcutsTableView.setModel(self.__shortcuts_model)
         self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
@@ -227,9 +238,6 @@ where you have write permissions.
                                   existing names when it has no focus
         """
         # Borrowed from https://gist.github.com/rBrenick/cb4c29f8a2d094e9df3e321a87eceb04
-        from qgis.PyQt.QtCore import QSortFilterProxyModel
-        from qgis.PyQt.QtWidgets import QComboBox, QCompleter
-
         combo_box.setFocusPolicy(Qt.StrongFocus)
         combo_box.setEditable(True)
         combo_box.setInsertPolicy(QComboBox.NoInsert)
@@ -252,8 +260,14 @@ where you have write permissions.
         self.cboConnectionService.blockSignals(True)  # Avoid triggering custom slot while clearing
         self.cboConnectionService.clear()
         self.cboConnectionService.blockSignals(False)
-        self.cboConnectionService.addItems([""] + service_names(self.__conf_file_path))
-        self.cboConnectionService.setCurrentText(current_text)
+        self.cboConnectionService.addItems(
+            [""] + service_names(self.__conf_file_path, sorted_alphabetically=True)
+        )
+        if current_text:
+            self.cboConnectionService.setCurrentIndex(
+                self.cboConnectionService.findText(current_text)
+            )
+        self.__make_combo_box_searchable(self.cboConnectionService)
 
     @pyqtSlot()
     def __duplicate_service(self):
@@ -438,9 +452,6 @@ where you have write permissions.
             if invalid:
                 self.bar.pushWarning(
                     self.tr("PG service"),
-                    self.tr(
-                        "Settings '{}' have invalid values. Adjust them and try again."
-                    ).format("', '".join(invalid)),
                     self.tr(
                         "Settings '{}' have invalid values. Adjust them and try again."
                     ).format("', '".join(invalid)),
