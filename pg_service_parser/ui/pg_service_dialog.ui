@@ -583,6 +583,28 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>txtConfFile</tabstop>
+  <tabstop>btnCreateServiceFile</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>cboEditService</tabstop>
+  <tabstop>tblServiceConfig</tabstop>
+  <tabstop>btnAddSettings</tabstop>
+  <tabstop>btnRemoveSetting</tabstop>
+  <tabstop>btnCopySettings</tabstop>
+  <tabstop>btnUpdateService</tabstop>
+  <tabstop>btnDuplicateService</tabstop>
+  <tabstop>cboSourceService</tabstop>
+  <tabstop>cboTargetService</tabstop>
+  <tabstop>shortcutsTableView</tabstop>
+  <tabstop>shortcutAddButton</tabstop>
+  <tabstop>shortcutRemoveButton</tabstop>
+  <tabstop>cboConnectionService</tabstop>
+  <tabstop>tblServiceConnections</tabstop>
+  <tabstop>btnAddConnection</tabstop>
+  <tabstop>btnEditConnection</tabstop>
+  <tabstop>btnRemoveConnection</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
