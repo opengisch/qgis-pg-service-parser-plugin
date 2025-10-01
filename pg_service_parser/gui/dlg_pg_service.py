@@ -102,13 +102,13 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.btnRemoveSetting.setEnabled(False)
         self.shortcutRemoveButton.setEnabled(False)
 
-        self.radOverwrite.toggled.connect(self.__update_target_controls)
         self.btnDuplicateService.clicked.connect(self.__duplicate_service)
         self.shortcutAddButton.clicked.connect(self.__create_copy_shortcut)
         self.shortcutRemoveButton.clicked.connect(self.__remove_copy_shortcut)
         self.cboSourceService.currentIndexChanged.connect(self.__source_service_changed)
         self.tabWidget.currentChanged.connect(self.__current_tab_changed)
         self.cboEditService.currentIndexChanged.connect(self.__edit_service_changed)
+        self.cboTargetService.currentTextChanged.connect(self.__update_duplicate_controls)
         self.btnAddSettings.clicked.connect(self.__add_settings_clicked)
         self.btnRemoveSetting.clicked.connect(self.__remove_setting_clicked)
         self.btnCopySettings.clicked.connect(self.__copy_settings_clicked)
@@ -119,10 +119,15 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.btnRemoveConnection.clicked.connect(self.__remove_connection_clicked)
         self.tblServiceConnections.doubleClicked.connect(self.__edit_double_clicked_connection)
 
+        self.__make_combo_box_searchable(self.cboEditService)
+        self.__make_combo_box_searchable(self.cboSourceService)
+        self.__make_combo_box_searchable(self.cboTargetService, allow_custom_name=True)
+        self.__make_combo_box_searchable(self.cboConnectionService)
+
         self.__initialize_edit_services()
         self.__initialize_duplicate_services()
         self.__initialize_connection_services()
-        self.__update_target_controls(True)
+        self.__update_duplicate_controls()
         self.__update_add_settings_button()
 
         self.bar = QgsMessageBar()
@@ -144,27 +149,6 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 # Set flag to get a template after some initialization
                 self.__new_empty_file = True
                 self.__initialize_dialog()
-
-    def permissionWarning(self):
-        self.bar.pushWarning(
-            self.tr("PG service"),
-            self.tr(
-                """
-The PG service file is read-only and cannot be updated.
-
-To fix this, make sure you have enough permissions and retry.
-Otherwise, you can use PGSERVICEFILE or PGSYSCONFDIR environment
-variables to point to a PG service file located in a folder
-where you have write permissions.
-"""
-            ),
-        )
-
-    @pyqtSlot(bool)
-    def __update_target_controls(self, checked):
-        self.cboTargetService.setEnabled(self.radOverwrite.isChecked())
-        self.txtNewService.setEnabled(not self.radOverwrite.isChecked())
-        self.shortcutAddButton.setEnabled(self.radOverwrite.isChecked())
 
     def __update_add_settings_button(self):
         # Make sure to call this method whenever the settings are added/removed
@@ -189,7 +173,26 @@ where you have write permissions.
 
         if current_text:
             self.cboTargetService.setCurrentIndex(self.cboTargetService.findText(current_text))
-        self.__make_combo_box_searchable(self.cboTargetService)
+
+    @pyqtSlot(str)
+    def __update_duplicate_controls(self):
+        current_target = self.cboTargetService.currentText().strip()
+        if not current_target or current_target == self.cboSourceService.currentText():
+            self.btnDuplicateService.setText("Duplicate service")
+            self.btnDuplicateService.setEnabled(False)
+            self.shortcutAddButton.setEnabled(False)
+            return
+
+        self.btnDuplicateService.setEnabled(True)
+
+        # 0 index holds an empty item
+        existing_name = self.cboTargetService.findText(current_target) > 0
+        if existing_name:
+            self.btnDuplicateService.setText("Overwrite service")
+            self.shortcutAddButton.setEnabled(True)
+        else:
+            self.btnDuplicateService.setText("Create new service")
+            self.shortcutAddButton.setEnabled(False)
 
     def __initialize_duplicate_services(self):
         current_text = self.cboSourceService.currentText()  # Remember latest currentText
@@ -201,7 +204,6 @@ where you have write permissions.
         )
         if current_text:
             self.cboSourceService.setCurrentIndex(self.cboSourceService.findText(current_text))
-        self.__make_combo_box_searchable(self.cboSourceService)
 
         self.shortcutsTableView.setModel(self.__shortcuts_model)
         self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
@@ -229,30 +231,6 @@ where you have write permissions.
         )
         if current_text:
             self.cboEditService.setCurrentIndex(self.cboEditService.findText(current_text))
-        self.__make_combo_box_searchable(self.cboEditService)
-
-    def __make_combo_box_searchable(self, combo_box, allow_custom_name=False):
-        """
-        :param combo_box: Combo box object
-        :param allow_custom_name: If False, the combo box should only display
-                                  existing names when it has no focus
-        """
-        # Borrowed from https://gist.github.com/rBrenick/cb4c29f8a2d094e9df3e321a87eceb04
-        combo_box.setFocusPolicy(Qt.StrongFocus)
-        combo_box.setEditable(True)
-        combo_box.setInsertPolicy(QComboBox.NoInsert)
-
-        filter_model = QSortFilterProxyModel(combo_box)
-        filter_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        filter_model.setSourceModel(combo_box.model())
-
-        completer = QCompleter(filter_model, combo_box)
-        completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
-        combo_box.setCompleter(completer)
-        combo_box.lineEdit().textEdited.connect(filter_model.setFilterFixedString)
-
-        if not allow_custom_name:
-            combo_box.installEventFilter(ServiceComboBoxLostFocusFilter(combo_box, self))
 
     def __initialize_connection_services(self):
         self.__connection_model = None
@@ -267,46 +245,26 @@ where you have write permissions.
             self.cboConnectionService.setCurrentIndex(
                 self.cboConnectionService.findText(current_text)
             )
-        self.__make_combo_box_searchable(self.cboConnectionService)
 
     @pyqtSlot()
     def __duplicate_service(self):
         # Validations
-        if self.radCreate.isChecked():
-            if not self.cboSourceService.currentText():
-                self.bar.pushInfo(
-                    self.tr("PG service"), self.tr("Select a valid source service and try again.")
-                )
-                return
-            elif not self.txtNewService.text().strip():
-                self.bar.pushInfo(
-                    self.tr("PG service"), self.tr("Enter a service name and try again.")
-                )
-                return
-            elif self.txtNewService.text().strip() in service_names(self.__conf_file_path):
-                self.bar.pushWarning(
-                    self.tr("PG service"),
-                    self.tr("Service name '{}' already exists! Change it and try again.").format(
-                        self.txtNewService.text().strip()
-                    ),
-                )
-                return
-        elif self.radOverwrite.isChecked():
-            if not self.cboTargetService.currentText():
-                self.bar.pushInfo(
-                    self.tr("PG service"), self.tr("Select a valid target service and try again.")
-                )
-                return
+        if not self.cboSourceService.currentText().strip():
+            self.bar.pushInfo(
+                self.tr("PG service"), self.tr("Select a valid source service and try again.")
+            )
+            return
+        elif not self.cboTargetService.currentText().strip():
+            self.bar.pushInfo(
+                self.tr("PG service"), self.tr("Select a valid target service and try again.")
+            )
+            return
 
-        target_service = (
-            self.cboTargetService.currentText()
-            if self.radOverwrite.isChecked()
-            else self.txtNewService.text().strip()
-        )
+        target_service = self.cboTargetService.currentText().strip()
 
         try:
             copy_service_settings(
-                self.cboSourceService.currentText(), target_service, self.__conf_file_path
+                self.cboSourceService.currentText().strip(), target_service, self.__conf_file_path
             )
         except PermissionError:
             self.permissionWarning()
@@ -314,8 +272,7 @@ where you have write permissions.
             self.bar.pushSuccess(
                 self.tr("PG service"), self.tr("PG service copied to '{}'!").format(target_service)
             )
-            if self.radCreate.isChecked():
-                self.__initialize_duplicate_services()  # Reflect the newly added service
+            self.__initialize_duplicate_services()  # Reflect the newly added service
 
     @pyqtSlot()
     def __create_copy_shortcut(self):
@@ -556,6 +513,29 @@ where you have write permissions.
 
     def __refresh_qgis_connections(self):
         refresh_connections(self.iface)
+
+    def __make_combo_box_searchable(self, combo_box, allow_custom_name=False):
+        """
+        :param combo_box: Combo box object
+        :param allow_custom_name: If False, the combo box should only display
+                                  existing names when it has no focus
+        """
+        # Borrowed from https://gist.github.com/rBrenick/cb4c29f8a2d094e9df3e321a87eceb04
+        combo_box.setFocusPolicy(Qt.StrongFocus)
+        combo_box.setEditable(True)
+        combo_box.setInsertPolicy(QComboBox.NoInsert)
+
+        filter_model = QSortFilterProxyModel(combo_box)
+        filter_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        filter_model.setSourceModel(combo_box.model())
+
+        completer = QCompleter(filter_model, combo_box)
+        completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
+        combo_box.setCompleter(completer)
+        combo_box.lineEdit().textEdited.connect(filter_model.setFilterFixedString)
+
+        if not allow_custom_name:
+            combo_box.installEventFilter(ServiceComboBoxLostFocusFilter(combo_box, self))
 
 
 class ServiceComboBoxLostFocusFilter(QObject):
