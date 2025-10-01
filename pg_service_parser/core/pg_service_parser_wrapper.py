@@ -2,7 +2,10 @@ import stat
 from pathlib import Path
 from typing import List, Optional
 
-from pg_service_parser.libs import pgserviceparser
+try:
+    import pgserviceparser
+except ModuleNotFoundError:
+    from pg_service_parser.libs import pgserviceparser
 
 
 def __make_file_writable(path: Path):
@@ -57,7 +60,7 @@ def service_names(conf_file_path: Optional[Path] = None) -> List[str]:
 
 @__whenReadOnlyTryToAddWritePermission
 def add_new_service(service_name: str, conf_file_path: Optional[Path] = None) -> bool:
-    return __create_service(service_name, {}, conf_file_path)
+    return create_service(service_name, {}, conf_file_path)
 
 
 def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> dict:
@@ -77,7 +80,7 @@ def write_service_to_text(service_name: str, settings: dict) -> str:
     return pgserviceparser.write_service_to_text(service_name, settings)
 
 
-def __create_service(
+def create_service(
     service_name: str, settings: dict, conf_file_path: Optional[Path] = None
 ) -> bool:
     config = pgserviceparser.full_config(conf_file_path)
@@ -105,7 +108,7 @@ def copy_service_settings(
     if target_service_name in config:
         pgserviceparser.write_service(target_service_name, settings, conf_file_path)
     else:
-        __create_service(target_service_name, settings, conf_file_path)
+        create_service(target_service_name, settings, conf_file_path)
 
 
 if __name__ == "__main__":
@@ -119,7 +122,7 @@ if __name__ == "__main__":
         "password": "secret",
         "dbname": "qgis_test_db",
     }
-    assert __create_service("qgis-test", _settings)
+    assert create_service("qgis-test", _settings)
     assert service_names() == ["qgis-test"]
 
     # Clone existing service
@@ -135,7 +138,7 @@ if __name__ == "__main__":
         "password": "secret",
         "dbname": "qgis_test_db2",
     }
-    assert __create_service("qgis-new-test", _settings)
+    assert create_service("qgis-new-test", _settings)
     assert service_names() == ["qgis-test", "qgis-demo", "qgis-new-test"]
     assert service_config("qgis-new-test") == _settings
 

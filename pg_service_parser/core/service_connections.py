@@ -14,7 +14,7 @@ def get_connections(service: str) -> dict[str, QgsAbstractDatabaseProviderConnec
     provider = QgsProviderRegistry.instance().providerMetadata("postgres")
     conns = provider.connections()
     for key, pg_conn in conns.items():
-        if QgsDataSourceUri(pg_conn.uri()).service() == service:
+        if service == "" or QgsDataSourceUri(pg_conn.uri()).service() == service:
             res[key] = pg_conn
 
     return res
