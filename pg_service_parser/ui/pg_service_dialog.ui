@@ -247,27 +247,7 @@
        <string>Duplicate Service</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="1" column="0">
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>354</width>
-           <height>22</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="1" column="1">
-        <widget class="QPushButton" name="btnDuplicateService">
-         <property name="text">
-          <string>Duplicate service</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0" colspan="2">
+       <item row="4" column="0" colspan="2">
         <widget class="QGroupBox" name="groupBox">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Shortcuts allow to duplicate services directly from the plugin icon in the toolbar or from the menu entry.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -330,34 +310,21 @@
          <property name="sizeConstraint">
           <enum>QLayout::SetDefaultConstraint</enum>
          </property>
-         <item row="1" column="1">
-          <widget class="QRadioButton" name="radCreate">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
            <property name="text">
-            <string>Create new</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QRadioButton" name="radOverwrite">
-           <property name="text">
-            <string>Overwrite</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QLineEdit" name="txtNewService">
-           <property name="placeholderText">
-            <string>New service name</string>
-           </property>
-           <property name="clearButtonEnabled">
-            <bool>false</bool>
+            <string>Source</string>
            </property>
           </widget>
          </item>
          <item row="0" column="2">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Target</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
           <widget class="QComboBox" name="cboTargetService">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -370,7 +337,23 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="0">
+         <item row="1" column="1">
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="1" column="0">
           <widget class="QComboBox" name="cboSourceService">
            <property name="sizePolicy">
             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -382,7 +365,7 @@
          </item>
         </layout>
        </item>
-       <item row="4" column="0" colspan="2">
+       <item row="5" column="0" colspan="2">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -398,7 +381,20 @@
          </property>
         </spacer>
        </item>
-       <item row="2" column="0" colspan="2">
+       <item row="2" column="0">
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>354</width>
+           <height>22</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="3" column="0" colspan="2">
         <spacer name="verticalSpacer_5">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -407,6 +403,29 @@
           <size>
            <width>20</width>
            <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPushButton" name="btnDuplicateService">
+         <property name="text">
+          <string>Duplicate service</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <spacer name="verticalSpacer_6">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>15</height>
           </size>
          </property>
         </spacer>
@@ -564,6 +583,28 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>txtConfFile</tabstop>
+  <tabstop>btnCreateServiceFile</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>cboEditService</tabstop>
+  <tabstop>tblServiceConfig</tabstop>
+  <tabstop>btnAddSettings</tabstop>
+  <tabstop>btnRemoveSetting</tabstop>
+  <tabstop>btnCopySettings</tabstop>
+  <tabstop>btnUpdateService</tabstop>
+  <tabstop>btnDuplicateService</tabstop>
+  <tabstop>cboSourceService</tabstop>
+  <tabstop>cboTargetService</tabstop>
+  <tabstop>shortcutsTableView</tabstop>
+  <tabstop>shortcutAddButton</tabstop>
+  <tabstop>shortcutRemoveButton</tabstop>
+  <tabstop>cboConnectionService</tabstop>
+  <tabstop>tblServiceConnections</tabstop>
+  <tabstop>btnAddConnection</tabstop>
+  <tabstop>btnEditConnection</tabstop>
+  <tabstop>btnRemoveConnection</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
