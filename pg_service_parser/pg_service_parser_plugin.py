@@ -39,6 +39,11 @@ class PgServiceParserPlugin:
         self.action = None
         self.shortcuts_model = None
 
+        self.default_action = None
+        self.add_service_action = None
+        self.register_connection_action = None
+        self.switch_to_service_action = None
+
     def tr(self, text: str) -> str:
         return QCoreApplication.translate("Plugin", text)
 
@@ -74,7 +79,7 @@ class PgServiceParserPlugin:
         )
         self.register_connection_action.triggered.connect(self.register_connection)
         self.switch_to_service_action = QAction(
-            icon, self.tr("Switch layer to PG service"), self.iface.mainWindow()
+            icon, self.tr("Switch layer to existent PG service"), self.iface.mainWindow()
         )
         self.switch_to_service_action.triggered.connect(self.switch_to_service)
 
@@ -164,12 +169,12 @@ class PgServiceParserPlugin:
             )
 
     def current_layer_changed(self, layer):
-        isPostgres = layer is not None and layer.providerType() == "postgres"
-        noService = isPostgres and QgsDataSourceUri(layer.source()).service() == ""
-        self.add_service_action.setVisible(noService)
-        self.switch_to_service_action.setVisible(noService)
+        is_postgres = layer is not None and layer.providerType() == "postgres"
+        no_service = is_postgres and QgsDataSourceUri(layer.source()).service() == ""
+        self.add_service_action.setVisible(no_service)
+        self.switch_to_service_action.setVisible(no_service)
 
-        if isPostgres:
+        if is_postgres:
             register_conn = True
             uri = QgsDataSourceUri(layer.source())
             for n, c in (
@@ -238,19 +243,19 @@ class PgServiceParserPlugin:
         refresh_connections(self.iface)
 
     def switch_to_service(self):
-        lyr = self.iface.activeLayer()
-        src = lyr.source()
-        uri = QgsDataSourceUri(src)
+        layer = self.iface.activeLayer()
+        source = layer.source()
+        uri = QgsDataSourceUri(source)
         if uri.service() != "":
             return
 
-        final_dst = src
+        final_data_source = source
         final_service = ""
 
         for name in service_names():
             # remove everything that matches the service and keep the shortest uri
 
-            uri = QgsDataSourceUri(src)
+            uri = QgsDataSourceUri(source)
             config = service_config(name)
 
             uri.setService(name)
@@ -282,13 +287,19 @@ class PgServiceParserPlugin:
             ):
                 uri.setPassword("")
 
-            dst = uri.uri()
-            if len(dst) - len(name) < len(final_dst) - len(final_service):
-                final_dst = dst
+            data_source = uri.uri()
+            if len(data_source) - len(name) < len(final_data_source) - len(final_service):
+                final_data_source = data_source
                 final_service = name
 
-        if final_dst != "":
-            lyr.setDataSource(final_dst)
+        if final_data_source != "":
+            layer.setDataSource(final_data_source)
+            self.iface.messageBar().pushSuccess(
+                self.tr("PG service"),
+                self.tr("Connection for layer '{}'  switched to service '{}'!").format(
+                    layer.name(), final_service
+                ),
+            )
         else:
             self.iface.messageBar().pushMessage(
                 self.tr("PG service"),
