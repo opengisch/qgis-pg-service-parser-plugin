@@ -27,13 +27,14 @@ Clients like QGIS will directly read your `pg_service.conf` file from any of the
 
 ### Edit PG service entries
 
-<img width="560" height="422" alt="image" src="https://github.com/user-attachments/assets/50629923-8684-4da9-b6dd-1a2797701dfe" />
+<img width="566" height="429" alt="image" src="https://github.com/user-attachments/assets/1af6ef30-2270-4b5e-9523-1584ffdf80d2" />
+
 
 ### Duplicate PG service entries
 
-If you want to duplicate a service, choose whether to copy/clone the service into a new service or to overwrite an existing one.
+If you want to duplicate a service, choose a source service and then enter a target service name. If the target service name already exists, you can overwrite it with the same settings of the source one. Otherwise, a new service will be created.
 
-<img width="560" height="446" alt="image" src="https://github.com/user-attachments/assets/a6120c41-c0fd-45e6-a41e-7b7cc72a57c0" />
+<img width="566" height="457" alt="image" src="https://github.com/user-attachments/assets/d3475562-f593-44f3-b582-0a6179f6e458" />
 
 If you perform the **overwrite** operation on a regular basis (e.g., switching from a service definition to another, while preserving the name), you can add `Shortcuts`, which give you a handy way to execute the same overwrite from the plugin icon or from the `Database` menu.
 
@@ -43,14 +44,36 @@ If you perform the **overwrite** operation on a regular basis (e.g., switching f
 
 You can create QGIS connections to a PG database, directly from the PG services that you edit.
 
-<img width="560" height="422" alt="image" src="https://github.com/user-attachments/assets/4d1a9d0a-55fa-4bea-a633-2a9b1fe21607" />
+<img width="566" height="429" alt="image" src="https://github.com/user-attachments/assets/eaccb586-fb66-47e2-94b3-51b89d673db5" />
+
+Once created, the connection will be available in the QGIS Browser as well as in the Data Source Manager, for you to add layers to the project.
+
+<img width="285" height="248" alt="image" src="https://github.com/user-attachments/assets/76cedc78-1884-4f86-8d0d-74dac321be17" />
+
+### Context actions for PG layers
+
+This plugin adds 3 new context actions to the layer's context menu:
+
+<img width="590" height="382" alt="image" src="https://github.com/user-attachments/assets/695abfbe-02da-45f1-8168-999fd5faaa53" />
+
+
+  + **Create PG service from layer connection**
+    
+    Visible if the layer is a PostgreSQL layer and its QGIS connection is not using a PG service.
+    
+  + **Register layer connection as QGIS connection**
+    
+    Visible if the layer is a PostgreSQL layer and its connection to PostgreSQL is not yet registered in QGIS (e.g., could come from a project of one of your colleagues).
+    
+  + **Switch layer to existent PG service**
+    
+    Visible if the layer is a PostgreSQL layer and its QGIS connection is not using a PG service.
 
 ### For devs
 
 #### pgserviceparser library
 
 This plugin uses the [pgserviceparser](https://github.com/opengisch/pgserviceparser) library, which is available as a standalone package on [PYPI](https://pypi.org/project/pgserviceparser/).
-
 
 
 #### Code style
@@ -61,3 +84,8 @@ Use pre-commit:
 pip install pre-commit
 pre-commit install
 ```
+
+#### Code contributions
+
+We welcome any code contribution, just open a PR.
+If the PR deals with GUI changes, add a screenshot/screencast showing off the new functionality.
