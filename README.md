@@ -58,15 +58,15 @@ This plugin adds 3 new context actions to the layer's context menu:
 
 
   + **Create PG service from layer connection**
-    
+
     Visible if the layer is a PostgreSQL layer and its QGIS connection is not using a PG service.
-    
+
   + **Register layer connection as QGIS connection**
-    
+
     Visible if the layer is a PostgreSQL layer and its connection to PostgreSQL is not yet registered in QGIS (e.g., could come from a project of one of your colleagues).
-    
+
   + **Switch layer to existent PG service**
-    
+
     Visible if the layer is a PostgreSQL layer and its QGIS connection is not using a PG service.
 
 ### For devs
