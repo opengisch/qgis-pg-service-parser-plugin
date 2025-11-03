@@ -218,7 +218,7 @@ class PgServiceParserPlugin:
             settings["user"] = uri.username()
         if uri.password() != "":
             settings["password"] = uri.password()
-        if uri.sslMode() != QgsDataSourceUri.SslPrefer:
+        if uri.sslMode() != QgsDataSourceUri.SslMode.SslPrefer:
             settings["sslmode"] = QgsDataSourceUri.encodeSslMode(uri.sslMode())
 
         if create_service(name, settings):
@@ -268,7 +268,7 @@ class PgServiceParserPlugin:
 
             sslmode = QgsDataSourceUri.encodeSslMode(uri.sslMode())
             if sslmode != "sslprefer" and "sslmode" in config and sslmode == config["sslmode"]:
-                uri.setSslMode(QgsDataSourceUri.SslPrefer)
+                uri.setSslMode(QgsDataSourceUri.SslMode.SslPrefer)
 
             if (
                 uri.database() != ""

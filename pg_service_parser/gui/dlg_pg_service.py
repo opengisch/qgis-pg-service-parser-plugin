@@ -521,16 +521,16 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                                   existing names when it has no focus
         """
         # Borrowed from https://gist.github.com/rBrenick/cb4c29f8a2d094e9df3e321a87eceb04
-        combo_box.setFocusPolicy(Qt.StrongFocus)
+        combo_box.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         combo_box.setEditable(True)
-        combo_box.setInsertPolicy(QComboBox.NoInsert)
+        combo_box.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
 
         filter_model = QSortFilterProxyModel(combo_box)
-        filter_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        filter_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         filter_model.setSourceModel(combo_box.model())
 
         completer = QCompleter(filter_model, combo_box)
-        completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
+        completer.setCompletionMode(QCompleter.CompletionMode.UnfilteredPopupCompletion)
         combo_box.setCompleter(completer)
         combo_box.lineEdit().textEdited.connect(filter_model.setFilterFixedString)
 
@@ -544,7 +544,7 @@ class ServiceComboBoxLostFocusFilter(QObject):
         self.__combo_box = combo_box
 
     def eventFilter(self, object, event) -> bool:
-        if event.type() == QEvent.FocusOut:
+        if event.type() == QEvent.Type.FocusOut:
             if object == self.__combo_box:
                 # If a service combo box lost focus, we make sure
                 # the text displayed corresponds to the currently
