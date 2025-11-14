@@ -32,6 +32,7 @@ def SERVICE_SETTINGS():
             "description": QCoreApplication.translate(
                 "Plugin", "Password to be used if the server demands password authentication."
             ),
+            "custom_type": WidgetTypeEnum.PASSWORD,
         },
         "passfile": {
             "default": "",
