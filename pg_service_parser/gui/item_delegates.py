@@ -1,7 +1,7 @@
 # Adapted from
 # https://github.com/xxyzz/WordDumb/blob/097dd6c1651fdc08b472e0bf639aec444b6e14ec/custom_lemmas.py#L398C1-L438C46
 
-from qgis.gui import QgsFileWidget
+from qgis.gui import QgsFileWidget, QgsPasswordLineEdit
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QComboBox, QStyledItemDelegate
 
@@ -48,6 +48,11 @@ class ServiceConfigDelegate(QStyledItemDelegate):
                 widget.fileChanged.connect(self.commit_and_close_editor)
                 return widget
 
+            elif widget_type == WidgetTypeEnum.PASSWORD:
+                widget = QgsPasswordLineEdit(parent)
+                widget.editingFinished.connect(self.commit_and_close_editor)
+                return widget
+
         return QStyledItemDelegate.createEditor(self, parent, option, index)
 
     def commit_and_close_editor(self):
@@ -58,12 +63,18 @@ class ServiceConfigDelegate(QStyledItemDelegate):
     def setEditorData(self, editor, index):
         if ServiceConfigModel.is_custom_widget_cell(index):
             widget_type = index.data(Qt.ItemDataRole.UserRole)["custom_type"]
-            value = index.data(Qt.ItemDataRole.DisplayRole)
+            value = (
+                index.data(Qt.ItemDataRole.EditRole)
+                if widget_type == WidgetTypeEnum.PASSWORD
+                else index.data(Qt.ItemDataRole.DisplayRole)
+            )
 
             if widget_type == WidgetTypeEnum.COMBOBOX:
                 editor.setCurrentText(value)
             elif widget_type == WidgetTypeEnum.FILEWIDGET:
                 editor.setFilePath(value)
+            elif widget_type == WidgetTypeEnum.PASSWORD:
+                editor.setText(value)
         else:
             QStyledItemDelegate.setEditorData(self, editor, index)
 
@@ -76,6 +87,8 @@ class ServiceConfigDelegate(QStyledItemDelegate):
                 value = editor.currentData()
             elif widget_type == WidgetTypeEnum.FILEWIDGET:
                 value = editor.filePath()
+            elif widget_type == WidgetTypeEnum.PASSWORD:
+                value = editor.text()
 
             model.setData(index, value, Qt.ItemDataRole.EditRole)
         else:

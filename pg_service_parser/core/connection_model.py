@@ -1,4 +1,4 @@
-from qgis.core import QgsAbstractDatabaseProviderConnection
+from qgis.core import QgsAbstractDatabaseProviderConnection, QgsDataSourceUri
 from qgis.PyQt.QtCore import QAbstractTableModel, QModelIndex, Qt
 from qgis.PyQt.QtGui import QFont
 
@@ -32,7 +32,7 @@ class ServiceConnectionModel(QAbstractTableModel):
             if index.column() == self.KEY_COL:
                 return key
             elif index.column() == self.VALUE_COL:
-                return self.__model_data[key].uri()
+                return QgsDataSourceUri.removePassword(self.__model_data[key].uri(), True)
         elif role == Qt.ItemDataRole.FontRole:
             if index.column() == self.KEY_COL:
                 font = QFont()
@@ -44,7 +44,7 @@ class ServiceConnectionModel(QAbstractTableModel):
                 return font
         elif role == Qt.ItemDataRole.ToolTipRole:
             if index.column() == self.VALUE_COL:
-                return self.__model_data[key].uri()
+                return QgsDataSourceUri.removePassword(self.__model_data[key].uri(), True)
 
         return None
 
