@@ -62,7 +62,12 @@ class ServiceConfigModel(QAbstractTableModel):
             if index.column() == self.KEY_COL:
                 return key
             elif index.column() == self.VALUE_COL:
-                return self.__model_data[key]
+                setting = self.__settings_data.get(key, {})
+                return (
+                    "************"
+                    if setting.get("custom_type") == WidgetTypeEnum.PASSWORD
+                    else self.__model_data[key]
+                )
         elif role == Qt.ItemDataRole.ToolTipRole:
             if index.column() == self.KEY_COL:
                 return (
