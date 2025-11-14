@@ -13,3 +13,4 @@ class SslModeEnum(Enum):
 class WidgetTypeEnum(Enum):
     COMBOBOX = 0
     FILEWIDGET = 1
+    PASSWORD = 2
