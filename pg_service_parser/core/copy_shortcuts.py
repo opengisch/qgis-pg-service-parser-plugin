@@ -1,4 +1,5 @@
 from qgis.PyQt.QtCore import QAbstractTableModel, QModelIndex, QObject, Qt
+from qgis.PyQt.QtGui import QColorConstants, QFont
 
 from pg_service_parser.core.plugin_settings import PluginSettings
 
@@ -26,9 +27,10 @@ class Shortcut:
 
 
 class ShortcutsModel(QAbstractTableModel):
-    def __init__(self, parent: QObject = None):
+    def __init__(self, parent: QObject = None, service_names_func=None):
         super().__init__(parent)
         self.shortcuts = []
+        self.__service_names_func = service_names_func
 
         for shortcut in PluginSettings().shortcuts_node.items():
             sh_from = PluginSettings().shortcut_from.value(shortcut)
@@ -51,6 +53,15 @@ class ShortcutsModel(QAbstractTableModel):
         self.shortcuts.append(shortcut)
         self.endInsertRows()
         self.dataChanged.emit(self.index(row, 0), self.index(row, 0))
+
+    def add_empty_shortcut(self):
+        """Add a new empty shortcut row to be filled by the user."""
+        row = self.rowCount()
+        self.beginInsertRows(QModelIndex(), row, row)
+        shortcut = Shortcut("", "", f"new shortcut {row + 1}")
+        self.shortcuts.append(shortcut)
+        self.endInsertRows()
+        return row
 
     def remove_shortcut(self, index: QModelIndex):
         if not index.isValid():
@@ -86,14 +97,15 @@ class ShortcutsModel(QAbstractTableModel):
         if not index.isValid():
             return None
 
-        if index.column() == 0:
-            return (
-                Qt.ItemFlag.ItemIsSelectable
-                | Qt.ItemFlag.ItemIsEnabled
-                | Qt.ItemFlag.ItemIsEditable
-            )
-        else:
-            return Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled
+        return (
+            Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsEditable
+        )
+
+    def __is_missing_service(self, service_name):
+        """Check if a service name does not exist in available services."""
+        if not service_name or not self.__service_names_func:
+            return False
+        return service_name not in self.__service_names_func()
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if not index.isValid:
@@ -107,6 +119,25 @@ class ShortcutsModel(QAbstractTableModel):
             if index.column() == 2:
                 return self.shortcuts[index.row()].service_to
 
+        if index.column() in (1, 2):
+            service = (
+                self.shortcuts[index.row()].service_from
+                if index.column() == 1
+                else self.shortcuts[index.row()].service_to
+            )
+            missing = self.__is_missing_service(service)
+
+            if role == Qt.ItemDataRole.ForegroundRole and missing:
+                return QColorConstants.Red
+
+            if role == Qt.ItemDataRole.FontRole and missing:
+                font = QFont()
+                font.setItalic(True)
+                return font
+
+            if role == Qt.ItemDataRole.ToolTipRole and missing:
+                return self.tr("Service '{}' does not exist").format(service)
+
         return None
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
@@ -114,12 +145,28 @@ class ShortcutsModel(QAbstractTableModel):
             return False
 
         if role == Qt.ItemDataRole.EditRole and len(value) > 0:
-            for sh in self.shortcuts:
-                if sh.name == value:
-                    return False
             if index.column() == 0:
+                for sh in self.shortcuts:
+                    if sh.name == value:
+                        return False
                 self.shortcuts[index.row()].rename(value)
                 self.dataChanged.emit(index, index)
+                return True
+            elif index.column() == 1:
+                shortcut = self.shortcuts[index.row()]
+                shortcut.service_from = value
+                # Auto-update name
+                shortcut.rename(f"{shortcut.service_from} -> {shortcut.service_to}")
+                shortcut.save()
+                self.dataChanged.emit(self.index(index.row(), 0), self.index(index.row(), 2))
+                return True
+            elif index.column() == 2:
+                shortcut = self.shortcuts[index.row()]
+                shortcut.service_to = value
+                # Auto-update name
+                shortcut.rename(f"{shortcut.service_from} -> {shortcut.service_to}")
+                shortcut.save()
+                self.dataChanged.emit(self.index(index.row(), 0), self.index(index.row(), 2))
                 return True
 
         return False

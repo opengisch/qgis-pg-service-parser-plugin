@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from qgis.core import NULL, Qgis, QgsDataSourceUri, QgsProviderRegistry, QgsSettingsTree
-from qgis.PyQt.QtCore import QCoreApplication, QLocale, QSettings, QTranslator
+from qgis.PyQt.QtCore import QCoreApplication, QLocale, QSettings, Qt, QTranslator
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMenu, QToolButton
 
@@ -67,7 +67,10 @@ class PgServiceParserPlugin:
         self.button.setDefaultAction(self.default_action)
         self.action = self.iface.addToolBarWidget(self.button)
 
-        self.shortcuts_model = ShortcutsModel(self.iface.mainWindow())
+        self.shortcuts_model = ShortcutsModel(
+            self.iface.mainWindow(),
+            service_names_func=lambda: service_names(conf_path(), sorted_alphabetically=True),
+        )
         self.shortcuts_model.dataChanged.connect(self.build_menus)
 
         self.add_service_action = QAction(
@@ -156,7 +159,10 @@ class PgServiceParserPlugin:
 
     def open(self, service):
         dlg = PgServiceDialog(self.shortcuts_model, self.iface)
-        dlg.cboEditService.setCurrentIndex(dlg.cboEditService.findText(service))
+        # Select the service in the list widget
+        items = dlg.lstServices.findItems(service, Qt.MatchFlag.MatchExactly)
+        if items:
+            dlg.lstServices.setCurrentItem(items[0])
         dlg.exec()
 
     def copy_service(self, service_from: str, service_to: str):

@@ -5,16 +5,19 @@ from qgis.PyQt.QtCore import (
     QItemSelection,
     QModelIndex,
     QObject,
+    QPoint,
     QSortFilterProxyModel,
     Qt,
     pyqtSlot,
 )
 from qgis.PyQt.QtWidgets import (
+    QAction,
     QApplication,
     QComboBox,
     QCompleter,
     QDialog,
     QHeaderView,
+    QMenu,
     QMessageBox,
     QSizePolicy,
 )
@@ -26,6 +29,8 @@ from pg_service_parser.core.pg_service_parser_wrapper import (
     add_new_service,
     conf_path,
     copy_service_settings,
+    remove_service,
+    rename_service,
     service_config,
     service_names,
     write_service,
@@ -41,12 +46,15 @@ from pg_service_parser.core.service_connections import (
 from pg_service_parser.core.setting_model import ServiceConfigModel
 from pg_service_parser.gui.dlg_new_name import EnumNewName, NewNameDialog
 from pg_service_parser.gui.dlg_service_settings import ServiceSettingsDialog
-from pg_service_parser.gui.item_delegates import ServiceConfigDelegate
+from pg_service_parser.gui.item_delegates import (
+    ServiceConfigDelegate,
+    ShortcutServiceDelegate,
+)
 from pg_service_parser.utils import get_ui_class
 
 DIALOG_UI = get_ui_class("pg_service_dialog.ui")
 EDIT_TAB_INDEX = 0
-DUPLICATE_TAB_INDEX = 1
+SHORTCUTS_TAB_INDEX = 1
 CONNECTION_TAB_INDEX = 2
 
 
@@ -83,12 +91,17 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.__edit_model = None
         self.__connection_model = None
 
+        # Edit tab icons
+        self.btnAddService.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
+        self.btnRemoveService.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.btnAddSettings.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
         self.btnRemoveSetting.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.btnCopySettings.setIcon(QgsApplication.getThemeIcon("/mActionEditCopy.svg"))
+        # Connection tab icons
         self.btnAddConnection.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
         self.btnEditConnection.setIcon(QgsApplication.getThemeIcon("/symbologyEdit.svg"))
         self.btnRemoveConnection.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
+        # Shortcuts tab icons
         self.shortcutAddButton.setIcon(QgsApplication.getThemeIcon("/symbologyAdd.svg"))
         self.shortcutRemoveButton.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.txtConfFile.setText(str(self.__conf_file_path))
@@ -100,35 +113,41 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.btnCreateServiceFile.setVisible(False)
         self.tblServiceConnections.horizontalHeader().setVisible(True)
         self.btnRemoveSetting.setEnabled(False)
+        self.btnRemoveService.setEnabled(False)
         self.shortcutRemoveButton.setEnabled(False)
 
-        self.btnDuplicateService.clicked.connect(self.__duplicate_service)
-        self.shortcutAddButton.clicked.connect(self.__create_copy_shortcut)
-        self.shortcutRemoveButton.clicked.connect(self.__remove_copy_shortcut)
-        self.cboSourceService.currentIndexChanged.connect(self.__source_service_changed)
+        # Edit tab connections
+        self.btnAddService.clicked.connect(self.__add_service_clicked)
+        self.btnRemoveService.clicked.connect(self.__remove_service_clicked)
+        self.lstServices.itemSelectionChanged.connect(self.__service_list_selection_changed)
+        self.lstServices.customContextMenuRequested.connect(self.__service_list_context_menu)
+        self.lstServices.itemDoubleClicked.connect(self.__service_list_double_clicked)
         self.tabWidget.currentChanged.connect(self.__current_tab_changed)
-        self.cboEditService.currentIndexChanged.connect(self.__edit_service_changed)
-        self.cboTargetService.currentTextChanged.connect(self.__update_duplicate_controls)
         self.btnAddSettings.clicked.connect(self.__add_settings_clicked)
         self.btnRemoveSetting.clicked.connect(self.__remove_setting_clicked)
         self.btnCopySettings.clicked.connect(self.__copy_settings_clicked)
         self.btnUpdateService.clicked.connect(self.__update_service_clicked)
+        # Shortcuts tab connections
+        self.shortcutAddButton.clicked.connect(self.__create_copy_shortcut)
+        self.shortcutRemoveButton.clicked.connect(self.__remove_copy_shortcut)
+        # Connection tab connections
         self.cboConnectionService.currentIndexChanged.connect(self.__connection_service_changed)
         self.btnAddConnection.clicked.connect(self.__add_connection_clicked)
         self.btnEditConnection.clicked.connect(self.__edit_connection_clicked)
         self.btnRemoveConnection.clicked.connect(self.__remove_connection_clicked)
         self.tblServiceConnections.doubleClicked.connect(self.__edit_double_clicked_connection)
 
-        self.__make_combo_box_searchable(self.cboEditService)
-        self.__make_combo_box_searchable(self.cboSourceService)
-        self.__make_combo_box_searchable(self.cboTargetService, allow_custom_name=True)
         self.__make_combo_box_searchable(self.cboConnectionService)
 
+        # Give all extra horizontal space to the editor panel, not the service list
+        self.editTabHLayout.setStretch(0, 0)
+        self.editTabHLayout.setStretch(1, 1)
+
         self.__initialize_edit_services()
-        self.__initialize_duplicate_services()
+        self.__initialize_shortcuts()
         self.__initialize_connection_services()
-        self.__update_duplicate_controls()
         self.__update_add_settings_button()
+        self.__set_edit_panel_enabled(False)
 
         self.bar = QgsMessageBar()
         self.bar.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
@@ -155,171 +174,53 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         enable = bool(self.__edit_model and self.__edit_model.rowCount() < len(SERVICE_SETTINGS()))
         self.btnAddSettings.setEnabled(enable)
 
-    @pyqtSlot(int)
-    def __source_service_changed(self, index):
-        # Remember latest currentText only if current item in source
-        # is different from current item in target
-        current_text = self.cboTargetService.currentText()
-        current_text = current_text if self.cboSourceService.currentText() != current_text else ""
-
-        self.cboTargetService.clear()
-        self.cboTargetService.addItems(
-            [""] + service_names(self.__conf_file_path, sorted_alphabetically=True)
-        )
-
-        model = self.cboTargetService.model()
-        item = model.item(index + 1)  # Account for the first (empty) item
-        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)  # Disable mirror item
-
-        if current_text:
-            self.cboTargetService.setCurrentIndex(self.cboTargetService.findText(current_text))
-
-    @pyqtSlot(str)
-    def __update_duplicate_controls(self):
-        current_target = self.cboTargetService.currentText().strip()
-        if not current_target or current_target == self.cboSourceService.currentText():
-            self.btnDuplicateService.setText("Duplicate service")
-            self.btnDuplicateService.setEnabled(False)
-            self.shortcutAddButton.setEnabled(False)
-            return
-
-        self.btnDuplicateService.setEnabled(True)
-
-        # 0 index holds an empty item
-        existing_name = self.cboTargetService.findText(current_target) > 0
-        if existing_name:
-            self.btnDuplicateService.setText("Overwrite service")
-            self.shortcutAddButton.setEnabled(True)
-        else:
-            self.btnDuplicateService.setText("Create new service")
-            self.shortcutAddButton.setEnabled(False)
-
-    def __initialize_duplicate_services(self):
-        current_text = self.cboSourceService.currentText()  # Remember latest currentText
-        self.cboSourceService.blockSignals(True)  # Avoid triggering custom slot while clearing
-        self.cboSourceService.clear()
-        self.cboSourceService.blockSignals(False)
-        self.cboSourceService.addItems(
-            service_names(self.__conf_file_path, sorted_alphabetically=True)
-        )
-        if current_text:
-            self.cboSourceService.setCurrentIndex(self.cboSourceService.findText(current_text))
-
-        self.shortcutsTableView.setModel(self.__shortcuts_model)
-        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
-            0, QHeaderView.ResizeMode.Interactive
-        )
-        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
-            1, QHeaderView.ResizeMode.Interactive
-        )
-        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
-            2, QHeaderView.ResizeMode.Stretch
-        )
-        self.shortcutsTableView.selectionModel().selectionChanged.connect(
-            self.__shortcuts_selection_changed
-        )
-        self.shortcutsTableView.resizeColumnsToContents()
+    # ---- Edit Service Tab ----
 
     def __initialize_edit_services(self):
         self.__edit_model = None
-        current_text = self.cboEditService.currentText()  # Remember latest currentText
-        self.cboEditService.blockSignals(True)  # Avoid triggering custom slot while clearing
-        self.cboEditService.clear()
-        self.cboEditService.blockSignals(False)
-        self.cboEditService.addItems(
-            service_names(self.__conf_file_path, sorted_alphabetically=True)
+        self.lstServices.blockSignals(True)
+        selected_text = (
+            self.lstServices.currentItem().text() if self.lstServices.currentItem() else ""
         )
-        if current_text:
-            self.cboEditService.setCurrentIndex(self.cboEditService.findText(current_text))
+        self.lstServices.clear()
+        names = service_names(self.__conf_file_path, sorted_alphabetically=True)
+        self.lstServices.addItems(names)
+        self.lstServices.blockSignals(False)
 
-    def __initialize_connection_services(self):
-        self.__connection_model = None
-        current_text = self.cboConnectionService.currentText()  # Remember latest currentText
-        self.cboConnectionService.blockSignals(True)  # Avoid triggering custom slot while clearing
-        self.cboConnectionService.clear()
-        self.cboConnectionService.blockSignals(False)
-        self.cboConnectionService.addItems(
-            [""] + service_names(self.__conf_file_path, sorted_alphabetically=True)
-        )
-        if current_text:
-            self.cboConnectionService.setCurrentIndex(
-                self.cboConnectionService.findText(current_text)
-            )
+        # Restore selection
+        if selected_text:
+            items = self.lstServices.findItems(selected_text, Qt.MatchFlag.MatchExactly)
+            if items:
+                self.lstServices.setCurrentItem(items[0])
+
+    def __set_edit_panel_enabled(self, enabled):
+        """Enable or disable the right-side settings editor panel."""
+        self.editRightPanel.setEnabled(enabled)
 
     @pyqtSlot()
-    def __duplicate_service(self):
-        # Validations
-        if not self.cboSourceService.currentText().strip():
-            self.bar.pushInfo(
-                self.tr("PG service"), self.tr("Select a valid source service and try again.")
-            )
-            return
-        elif not self.cboTargetService.currentText().strip():
-            self.bar.pushInfo(
-                self.tr("PG service"), self.tr("Select a valid target service and try again.")
-            )
-            return
+    def __service_list_selection_changed(self):
+        selected_items = self.lstServices.selectedItems()
+        count = len(selected_items)
 
-        target_service = self.cboTargetService.currentText().strip()
+        self.btnRemoveService.setEnabled(count > 0)
 
-        try:
-            copy_service_settings(
-                self.cboSourceService.currentText().strip(), target_service, self.__conf_file_path
-            )
-        except PermissionError:
-            self.permissionWarning()
+        if count == 1:
+            # Single selection: load into editor
+            self.__edit_service_selected(selected_items[0].text())
+            self.__set_edit_panel_enabled(True)
         else:
-            self.bar.pushSuccess(
-                self.tr("PG service"), self.tr("PG service copied to '{}'!").format(target_service)
-            )
-            self.__initialize_duplicate_services()  # Reflect the newly added service
+            # Multi-selection or no selection: disable editor
+            self.__edit_model = None
+            self.tblServiceConfig.setModel(None)
+            self.__set_edit_panel_enabled(False)
+            self.btnUpdateService.setDisabled(True)
+            self.__update_add_settings_button()
 
-    @pyqtSlot()
-    def __create_copy_shortcut(self):
-        target_service = self.cboTargetService.currentText()
-
-        if not target_service:
-            self.bar.pushInfo(
-                self.tr("PG service"), self.tr("Select a valid target service and try again.")
-            )
-            return
-        self.__shortcuts_model.add_shortcut(self.cboSourceService.currentText(), target_service)
-        self.shortcutsTableView.resizeColumnsToContents()
-
-    @pyqtSlot()
-    def __remove_copy_shortcut(self):
-        selectedIndexes = self.shortcutsTableView.selectedIndexes()
-        if len(selectedIndexes) == 0:
-            return
-
-        shortcut = self.__shortcuts_model.data(selectedIndexes[0])
-
-        res = QMessageBox.question(
-            self,
-            self.tr("Remove shortcut"),
-            self.tr("Are you sure you want to remove the shortcut '{}'?").format(shortcut),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if res == QMessageBox.StandardButton.Yes:
-            self.__shortcuts_model.remove_shortcut(selectedIndexes[0])
-
-    @pyqtSlot(int)
-    def __current_tab_changed(self, index):
-        if index == DUPLICATE_TAB_INDEX:
-            # self.__initialize_duplicate_services()
-            pass  # For now, services to be copied won't be altered in other tabs
-        elif index == EDIT_TAB_INDEX:
-            self.__initialize_edit_services()
-        elif index == CONNECTION_TAB_INDEX:
-            self.__initialize_connection_services()
-
-    @pyqtSlot(int)
-    def __edit_service_changed(self, index):
-        target_service = self.cboEditService.currentText()
+    def __edit_service_selected(self, service_name):
+        """Load a service into the settings editor."""
         if self.__edit_model and self.__edit_model.is_dirty():
             if (
-                not QMessageBox.question(
+                QMessageBox.question(
                     self,
                     self.tr("Pending edits"),
                     self.tr(
@@ -328,18 +229,20 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,
                 )
-                == QMessageBox.StandardButton.Yes
+                != QMessageBox.StandardButton.Yes
             ):
-
-                self.cboEditService.blockSignals(True)
-                self.cboEditService.setCurrentIndex(
-                    self.cboEditService.findText(self.__edit_model.service_name())
+                # Restore previous selection
+                self.lstServices.blockSignals(True)
+                items = self.lstServices.findItems(
+                    self.__edit_model.service_name(), Qt.MatchFlag.MatchExactly
                 )
-                self.cboEditService.blockSignals(False)
+                if items:
+                    self.lstServices.setCurrentItem(items[0])
+                self.lstServices.blockSignals(False)
                 return
 
         self.__edit_model = ServiceConfigModel(
-            target_service, service_config(target_service, self.__conf_file_path)
+            service_name, service_config(service_name, self.__conf_file_path)
         )
         self.tblServiceConfig.setModel(self.__edit_model)
         self.tblServiceConfig.setItemDelegate(ServiceConfigDelegate(self))
@@ -356,6 +259,147 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         self.__update_add_settings_button()  # Model just created
         self.__update_settings_buttons(QItemSelection(), QItemSelection())
+
+    @pyqtSlot()
+    def __add_service_clicked(self):
+        dlg = NewNameDialog(EnumNewName.SERVICE, self)
+        dlg.exec()
+        if dlg.result() == QDialog.DialogCode.Accepted:
+            try:
+                add_new_service(dlg.new_name, self.__conf_file_path)
+            except PermissionError:
+                self.permissionWarning()
+            else:
+                self.bar.pushSuccess(
+                    self.tr("PG service"),
+                    self.tr("Service '{}' created!").format(dlg.new_name),
+                )
+                self.__initialize_edit_services()
+                # Select newly created service
+                items = self.lstServices.findItems(dlg.new_name, Qt.MatchFlag.MatchExactly)
+                if items:
+                    self.lstServices.setCurrentItem(items[0])
+
+    @pyqtSlot()
+    def __remove_service_clicked(self):
+        selected_items = self.lstServices.selectedItems()
+        if not selected_items:
+            return
+
+        names = [item.text() for item in selected_items]
+        if len(names) == 1:
+            message = self.tr("Are you sure you want to remove the service '{}'?").format(names[0])
+        else:
+            message = self.tr("Are you sure you want to remove {} services?\n\n{}").format(
+                len(names), "\n".join(names)
+            )
+
+        if (
+            QMessageBox.question(
+                self,
+                self.tr("Remove service(s)"),
+                message,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            == QMessageBox.StandardButton.Yes
+        ):
+            for name in names:
+                try:
+                    remove_service(name, self.__conf_file_path)
+                except PermissionError:
+                    self.permissionWarning()
+                    return
+
+            self.bar.pushSuccess(
+                self.tr("PG service"),
+                self.tr("{} service(s) removed.").format(len(names)),
+            )
+            self.__edit_model = None
+            self.tblServiceConfig.setModel(None)
+            self.__set_edit_panel_enabled(False)
+            self.__initialize_edit_services()
+
+    @pyqtSlot(QPoint)
+    def __service_list_context_menu(self, pos):
+        item = self.lstServices.itemAt(pos)
+        if not item:
+            return
+
+        selected_items = self.lstServices.selectedItems()
+        if len(selected_items) != 1:
+            return
+
+        menu = QMenu(self)
+        rename_action = QAction(
+            QgsApplication.getThemeIcon("/mActionRename.svg"),
+            self.tr("Rename service..."),
+            self,
+        )
+        rename_action.triggered.connect(lambda: self.__rename_service(item.text()))
+        menu.addAction(rename_action)
+
+        duplicate_action = QAction(
+            QgsApplication.getThemeIcon("/mActionDuplicateLayer.svg"),
+            self.tr("Duplicate service..."),
+            self,
+        )
+        duplicate_action.triggered.connect(lambda: self.__duplicate_and_edit_service(item.text()))
+        menu.addAction(duplicate_action)
+        menu.exec(self.lstServices.viewport().mapToGlobal(pos))
+
+    def __service_list_double_clicked(self, item):
+        """Rename service on double-click."""
+        if item:
+            self.__rename_service(item.text())
+
+    def __rename_service(self, old_name):
+        """Rename a service."""
+        dlg = NewNameDialog(EnumNewName.SERVICE, self)
+        dlg.setWindowTitle(self.tr("Rename service"))
+        dlg.label.setText(self.tr("Enter the new name for '{}'").format(old_name))
+        dlg.txtNewName.setText(old_name)
+        dlg.exec()
+        if dlg.result() == QDialog.DialogCode.Accepted:
+            new_name = dlg.new_name
+            if new_name == old_name:
+                return
+            try:
+                rename_service(old_name, new_name, self.__conf_file_path)
+            except PermissionError:
+                self.permissionWarning()
+            else:
+                self.bar.pushSuccess(
+                    self.tr("PG service"),
+                    self.tr("Service '{}' renamed to '{}'!").format(old_name, new_name),
+                )
+                self.__initialize_edit_services()
+                items = self.lstServices.findItems(new_name, Qt.MatchFlag.MatchExactly)
+                if items:
+                    self.lstServices.setCurrentItem(items[0])
+
+    def __duplicate_and_edit_service(self, source_service_name):
+        """Duplicate a service with a new name and select it for editing."""
+        dlg = NewNameDialog(EnumNewName.SERVICE, self)
+        dlg.exec()
+        if dlg.result() == QDialog.DialogCode.Accepted:
+            target_name = dlg.new_name
+            try:
+                copy_service_settings(source_service_name, target_name, self.__conf_file_path)
+            except PermissionError:
+                self.permissionWarning()
+            else:
+                self.bar.pushSuccess(
+                    self.tr("PG service"),
+                    self.tr("Service '{}' duplicated to '{}'!").format(
+                        source_service_name, target_name
+                    ),
+                )
+                self.__initialize_edit_services()
+                # Select duplicated service
+                items = self.lstServices.findItems(target_name, Qt.MatchFlag.MatchExactly)
+                if items:
+                    self.lstServices.setCurrentItem(items[0])
 
     @pyqtSlot(QItemSelection, QItemSelection)
     def __update_settings_buttons(self, selected, deselected):
@@ -395,7 +439,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
     @pyqtSlot()
     def __copy_settings_clicked(self):
-        service_name = self.cboEditService.currentText()
+        selected_items = self.lstServices.selectedItems()
+        if not selected_items or len(selected_items) != 1:
+            return
+
+        service_name = selected_items[0].text()
         settings_text = write_service_to_text(service_name, self.__edit_model.service_config())
         QApplication.clipboard().setText(settings_text)
         self.bar.pushSuccess(
@@ -415,7 +463,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
                 )
                 return
 
-            target_service = self.cboEditService.currentText()
+            selected_items = self.lstServices.selectedItems()
+            if not selected_items or len(selected_items) != 1:
+                return
+
+            target_service = selected_items[0].text()
             try:
                 write_service(
                     target_service, self.__edit_model.service_config(), self.__conf_file_path
@@ -431,6 +483,87 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         else:
             self.bar.pushInfo(
                 self.tr("PG service"), self.tr("Edit the service configuration and try again.")
+            )
+
+    # ---- Shortcuts Tab ----
+
+    def __initialize_shortcuts(self):
+        self.shortcutsTableView.setModel(self.__shortcuts_model)
+        self.__shortcut_delegate = ShortcutServiceDelegate(
+            lambda: service_names(self.__conf_file_path, sorted_alphabetically=True),
+            self,
+        )
+        self.shortcutsTableView.setItemDelegate(self.__shortcut_delegate)
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeMode.Interactive
+        )
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
+            1, QHeaderView.ResizeMode.Interactive
+        )
+        self.shortcutsTableView.horizontalHeader().setSectionResizeMode(
+            2, QHeaderView.ResizeMode.Stretch
+        )
+        self.shortcutsTableView.selectionModel().selectionChanged.connect(
+            self.__shortcuts_selection_changed
+        )
+        self.shortcutsTableView.resizeColumnsToContents()
+
+    @pyqtSlot()
+    def __create_copy_shortcut(self):
+        row = self.__shortcuts_model.add_empty_shortcut()
+        self.shortcutsTableView.resizeColumnsToContents()
+        # Select and start editing the new row (From column)
+        index = self.__shortcuts_model.index(row, 1)
+        self.shortcutsTableView.scrollTo(index)
+        self.shortcutsTableView.edit(index)
+
+    @pyqtSlot()
+    def __remove_copy_shortcut(self):
+        selectedIndexes = self.shortcutsTableView.selectedIndexes()
+        if len(selectedIndexes) == 0:
+            return
+
+        shortcut = self.__shortcuts_model.data(selectedIndexes[0])
+
+        res = QMessageBox.question(
+            self,
+            self.tr("Remove shortcut"),
+            self.tr("Are you sure you want to remove the shortcut '{}'?").format(shortcut),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if res == QMessageBox.StandardButton.Yes:
+            self.__shortcuts_model.remove_shortcut(selectedIndexes[0])
+
+    @pyqtSlot(QItemSelection, QItemSelection)
+    def __shortcuts_selection_changed(self, selected, deselected):
+        self.shortcutRemoveButton.setEnabled(len(selected) > 0)
+
+    # ---- Tab Changed ----
+
+    @pyqtSlot(int)
+    def __current_tab_changed(self, index):
+        if index == SHORTCUTS_TAB_INDEX:
+            pass  # Shortcuts are always up-to-date
+        elif index == EDIT_TAB_INDEX:
+            self.__initialize_edit_services()
+        elif index == CONNECTION_TAB_INDEX:
+            self.__initialize_connection_services()
+
+    # ---- Connection Tab ----
+
+    def __initialize_connection_services(self):
+        self.__connection_model = None
+        current_text = self.cboConnectionService.currentText()
+        self.cboConnectionService.blockSignals(True)
+        self.cboConnectionService.clear()
+        self.cboConnectionService.blockSignals(False)
+        self.cboConnectionService.addItems(
+            [""] + service_names(self.__conf_file_path, sorted_alphabetically=True)
+        )
+        if current_text:
+            self.cboConnectionService.setCurrentIndex(
+                self.cboConnectionService.findText(current_text)
             )
 
     @pyqtSlot(int)
@@ -506,10 +639,6 @@ class PgServiceDialog(QDialog, DIALOG_UI):
     def __update_connection_controls(self, enable):
         self.btnEditConnection.setEnabled(enable)
         self.btnRemoveConnection.setEnabled(enable)
-
-    @pyqtSlot(QItemSelection, QItemSelection)
-    def __shortcuts_selection_changed(self, selected, deselected):
-        self.shortcutRemoveButton.setEnabled(len(selected) > 0)
 
     def __refresh_qgis_connections(self):
         refresh_connections(self.iface)

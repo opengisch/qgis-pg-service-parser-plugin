@@ -61,6 +61,16 @@ def add_new_service(service_name: str, conf_file_path: Optional[Path] = None) ->
     return create_service(service_name, {}, conf_file_path)
 
 
+@__whenReadOnlyTryToAddWritePermission
+def remove_service(service_name: str, conf_file_path: Optional[Path] = None) -> None:
+    pgserviceparser.remove_service(service_name, conf_file_path)
+
+
+@__whenReadOnlyTryToAddWritePermission
+def rename_service(old_name: str, new_name: str, conf_file_path: Optional[Path] = None) -> None:
+    pgserviceparser.rename_service(old_name, new_name, conf_file_path)
+
+
 def service_config(service_name: str, conf_file_path: Optional[Path] = None) -> dict:
     return pgserviceparser.service_config(service_name, conf_file_path)
 
