@@ -7,13 +7,6 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMenu, QToolButton
 
 from pg_service_parser.core.copy_shortcuts import ShortcutsModel
-from pg_service_parser.core.pg_service_parser_wrapper import (
-    conf_path,
-    copy_service_settings,
-    create_service,
-    service_config,
-    service_names,
-)
 from pg_service_parser.core.plugin_settings import PLUGIN_NAME
 from pg_service_parser.core.service_connections import (
     edit_connection,
@@ -21,6 +14,13 @@ from pg_service_parser.core.service_connections import (
 )
 from pg_service_parser.gui.dlg_new_name import EnumNewName, get_new_name
 from pg_service_parser.gui.dlg_pg_service import PgServiceDialog
+from pg_service_parser.libs.pgserviceparser import (
+    conf_path,
+    copy_service_settings,
+    create_service,
+    service_config,
+    service_names,
+)
 
 
 class PgServiceParserPlugin:

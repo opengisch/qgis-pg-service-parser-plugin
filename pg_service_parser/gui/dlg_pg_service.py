@@ -25,17 +25,6 @@ from qgis.PyQt.QtWidgets import (
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
 from pg_service_parser.core.connection_model import ServiceConnectionModel
 from pg_service_parser.core.copy_shortcuts import ShortcutsModel
-from pg_service_parser.core.pg_service_parser_wrapper import (
-    add_new_service,
-    conf_path,
-    copy_service_settings,
-    remove_service,
-    rename_service,
-    service_config,
-    service_names,
-    write_service,
-    write_service_to_text,
-)
 from pg_service_parser.core.service_connections import (
     create_connection,
     edit_connection,
@@ -49,6 +38,17 @@ from pg_service_parser.gui.dlg_service_settings import ServiceSettingsDialog
 from pg_service_parser.gui.item_delegates import (
     ServiceConfigDelegate,
     ShortcutServiceDelegate,
+)
+from pg_service_parser.libs.pgserviceparser import (
+    conf_path,
+    copy_service_settings,
+    create_service,
+    remove_service,
+    rename_service,
+    service_config,
+    service_names,
+    write_service,
+    write_service_to_text,
 )
 from pg_service_parser.utils import get_ui_class
 
@@ -161,7 +161,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             self.__conf_file_path = conf_path(create_if_missing=True)
 
             try:
-                add_new_service(dlg.new_name)
+                create_service(dlg.new_name, {})
             except PermissionError:
                 self.permissionWarning()
             else:
@@ -266,7 +266,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         dlg.exec()
         if dlg.result() == QDialog.DialogCode.Accepted:
             try:
-                add_new_service(dlg.new_name, self.__conf_file_path)
+                create_service(dlg.new_name, {}, self.__conf_file_path)
             except PermissionError:
                 self.permissionWarning()
             else:
