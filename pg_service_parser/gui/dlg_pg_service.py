@@ -359,6 +359,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.__shortcuts_model = shortcuts_model
 
         self.__conf_file_path = conf_path()
+        self.__new_empty_file = False
         self.__initialize_dialog()
 
     def __initialize_dialog(self):
@@ -402,6 +403,9 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         # Embed the QGIS-adapted ServiceWidget in the Services tab
         self.__service_widget = _QgisServiceWidget(self.__conf_file_path, self.bar, self)
+        if self.__new_empty_file:
+            self.__service_widget._new_empty_file = True
+            self.__new_empty_file = False
         self.editTabLayout.addWidget(self.__service_widget)
 
         # Shortcuts tab connections
@@ -433,7 +437,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             except PermissionError:
                 self.permissionWarning()
             else:
-                self.__service_widget._new_empty_file = True
+                self.__new_empty_file = True
                 self.__initialize_dialog()
 
     # ---- Shortcuts Tab ----
