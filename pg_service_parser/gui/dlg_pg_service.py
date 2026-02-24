@@ -49,7 +49,9 @@ from pg_service_parser.libs.pgserviceparser import (
     write_service,
     write_service_to_text,
 )
-from pg_service_parser.libs.pgserviceparser.gui.service_widget import ServiceWidget
+from pg_service_parser.libs.pgserviceparser.gui.service_widget import (
+    PGServiceParserWidget,
+)
 from pg_service_parser.utils import get_ui_class
 
 DIALOG_UI = get_ui_class("pg_service_dialog.ui")
@@ -59,12 +61,12 @@ CONNECTION_TAB_INDEX = 2
 
 
 # ---------------------------------------------------------------------------
-#  QGIS-adapted ServiceWidget
+#  QGIS-adapted PGServiceParserWidget
 # ---------------------------------------------------------------------------
 
 
-class _QgisServiceWidget(ServiceWidget):
-    """ServiceWidget with QGIS-specific dialogs, icons, and message bar."""
+class _QgisServiceWidget(PGServiceParserWidget):
+    """PGServiceParserWidget with QGIS-specific dialogs, icons, and message bar."""
 
     def __init__(self, conf_file_path, message_bar, parent=None):
         self._bar = message_bar
@@ -401,7 +403,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.bar.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         self.layout().insertWidget(0, self.bar)
 
-        # Embed the QGIS-adapted ServiceWidget in the Services tab
+        # Embed the QGIS-adapted PGServiceParserWidget in the Services tab
         self.__service_widget = _QgisServiceWidget(self.__conf_file_path, self.bar, self)
         if self.__new_empty_file:
             self.__service_widget._new_empty_file = True
