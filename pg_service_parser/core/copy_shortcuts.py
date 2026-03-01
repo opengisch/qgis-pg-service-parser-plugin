@@ -63,6 +63,21 @@ class ShortcutsModel(QAbstractTableModel):
         self.endInsertRows()
         return row
 
+    def rename_service(self, old_name: str, new_name: str):
+        """Update all shortcuts that reference old_name to use new_name."""
+        for row, shortcut in enumerate(self.shortcuts):
+            changed = False
+            if shortcut.service_from == old_name:
+                shortcut.service_from = new_name
+                changed = True
+            if shortcut.service_to == old_name:
+                shortcut.service_to = new_name
+                changed = True
+            if changed:
+                shortcut.rename(f"{shortcut.service_from} -> {shortcut.service_to}")
+                shortcut.save()
+                self.dataChanged.emit(self.index(row, 0), self.index(row, self.columnCount() - 1))
+
     def remove_shortcut(self, index: QModelIndex):
         if not index.isValid():
             return

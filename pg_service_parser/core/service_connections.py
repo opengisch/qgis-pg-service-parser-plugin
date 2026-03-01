@@ -52,6 +52,23 @@ def edit_connection(connection_name: str, parent: QWidget) -> None:
         widget.btnEdit_clicked()
 
 
+def rename_service_in_connections(old_service: str, new_service: str) -> int:
+    """Update all QGIS PG connections that reference old_service to use new_service.
+
+    Returns the number of connections updated.
+    """
+    provider = QgsProviderRegistry.instance().providerMetadata("postgres")
+    count = 0
+    for name, conn in provider.connections().items():
+        uri = QgsDataSourceUri(conn.uri())
+        if uri.service() == old_service:
+            new_uri = conn.uri().replace(f"service='{old_service}'", f"service='{new_service}'")
+            new_conn = provider.createConnection(new_uri, {})
+            provider.saveConnection(new_conn, name)
+            count += 1
+    return count
+
+
 def refresh_connections(iface):
     # Refresh PG connections in the browser
     # and in the Data Source Manager.

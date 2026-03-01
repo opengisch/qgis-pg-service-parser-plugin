@@ -7,6 +7,7 @@ from qgis.PyQt.QtCore import (
     QObject,
     QSortFilterProxyModel,
     Qt,
+    pyqtSignal,
     pyqtSlot,
 )
 from qgis.PyQt.QtWidgets import (
@@ -30,6 +31,7 @@ from pg_service_parser.core.service_connections import (
     get_connections,
     refresh_connections,
     remove_connection,
+    rename_service_in_connections,
 )
 from pg_service_parser.core.setting_model import ServiceConfigModel
 from pg_service_parser.gui.dlg_new_name import EnumNewName, NewNameDialog
@@ -67,6 +69,8 @@ CONNECTION_TAB_INDEX = 2
 
 class _QgisServiceWidget(PGServiceParserWidget):
     """PGServiceParserWidget with QGIS-specific dialogs, icons, and message bar."""
+
+    service_renamed = pyqtSignal(str, str)  # old_name, new_name
 
     def __init__(self, conf_file_path, message_bar, parent=None):
         self._bar = message_bar
@@ -179,6 +183,7 @@ class _QgisServiceWidget(PGServiceParserWidget):
                 items = self.lstServices.findItems(new_name, Qt.MatchFlag.MatchExactly)
                 if items:
                     self.lstServices.setCurrentItem(items[0])
+                self.service_renamed.emit(old_name, new_name)
 
     def _duplicate_and_edit_service(self, source_service_name):
         dlg = NewNameDialog(EnumNewName.SERVICE, self)
@@ -410,6 +415,8 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             self.__new_empty_file = False
         self.editTabLayout.addWidget(self.__service_widget)
 
+        # Service rename propagation
+        self.__service_widget.service_renamed.connect(self.__on_service_renamed)
         # Shortcuts tab connections
         self.shortcutAddButton.clicked.connect(self.__create_copy_shortcut)
         self.shortcutRemoveButton.clicked.connect(self.__remove_copy_shortcut)
@@ -441,6 +448,19 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             else:
                 self.__new_empty_file = True
                 self.__initialize_dialog()
+
+    # ---- Service Rename Propagation ----
+
+    @pyqtSlot(str, str)
+    def __on_service_renamed(self, old_name, new_name):
+        """Update shortcuts and QGIS connections when a service is renamed."""
+        # Update shortcuts
+        self.__shortcuts_model.rename_service(old_name, new_name)
+
+        # Update QGIS connections
+        renamed_count = rename_service_in_connections(old_name, new_name)
+        if renamed_count:
+            self.__refresh_qgis_connections()
 
     # ---- Shortcuts Tab ----
 
