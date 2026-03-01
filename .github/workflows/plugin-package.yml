@@ -65,7 +65,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
         with:
-          name: pg_service_parser_dev
+          archive: false
           path: pg_service_parser.0.0.0.zip
           if-no-files-found: error
 
