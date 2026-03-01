@@ -88,7 +88,20 @@
       <attribute name="title">
        <string>Services</string>
       </attribute>
-      <layout class="QVBoxLayout" name="editTabLayout"/>
+      <layout class="QVBoxLayout" name="editTabLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+      </layout>
      </widget>
      <widget class="QWidget" name="tabShortcuts">
       <attribute name="title">
