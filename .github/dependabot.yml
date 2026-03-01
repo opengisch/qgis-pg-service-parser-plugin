@@ -4,8 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
-
   - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+  - package-ecosystem: "pre-commit"
     directory: "/"
     schedule:
       interval: "monthly"
