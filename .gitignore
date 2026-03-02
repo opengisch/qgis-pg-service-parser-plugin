@@ -3,3 +3,4 @@ pg_service_parser/libs/
 .idea
 __pycache__
 .DS_Store
+.python-version

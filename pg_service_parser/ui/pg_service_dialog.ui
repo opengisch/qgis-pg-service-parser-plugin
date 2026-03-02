@@ -86,316 +86,63 @@
      </property>
      <widget class="QWidget" name="tabEdit">
       <attribute name="title">
-       <string>Edit Service</string>
+       <string>Services</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="1" column="0">
-        <widget class="QTableView" name="tblServiceConfig">
-         <property name="editTriggers">
-          <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
-         </property>
-         <property name="alternatingRowColors">
-          <bool>true</bool>
-         </property>
+      <layout class="QVBoxLayout" name="editTabLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabShortcuts">
+      <attribute name="title">
+       <string>Shortcuts</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0" rowspan="3">
+        <widget class="QTableView" name="shortcutsTableView">
          <property name="selectionMode">
           <enum>QAbstractItemView::SingleSelection</enum>
          </property>
          <property name="selectionBehavior">
           <enum>QAbstractItemView::SelectRows</enum>
          </property>
-         <property name="gridStyle">
-          <enum>Qt::DotLine</enum>
-         </property>
-         <attribute name="horizontalHeaderVisible">
-          <bool>false</bool>
-         </attribute>
-         <attribute name="horizontalHeaderStretchLastSection">
-          <bool>true</bool>
-         </attribute>
          <attribute name="verticalHeaderVisible">
           <bool>false</bool>
          </attribute>
         </widget>
        </item>
-       <item row="1" column="1">
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QPushButton" name="btnAddSettings">
-           <property name="maximumSize">
-            <size>
-             <width>25</width>
-             <height>25</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>Add settings to current service</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnRemoveSetting">
-           <property name="maximumSize">
-            <size>
-             <width>25</width>
-             <height>25</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>Remove setting from current service</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </item>
-       <item row="2" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnCopySettings">
-           <property name="maximumSize">
-            <size>
-             <width>25</width>
-             <height>25</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>Copy settings to clipboard</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnUpdateService">
-           <property name="text">
-            <string>Update service</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="0" column="0" colspan="2">
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <item>
-          <widget class="QLabel" name="lblEditService">
-           <property name="text">
-            <string>Edit service</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="cboEditService">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_3">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tabDuplicate">
-      <attribute name="title">
-       <string>Duplicate Service</string>
-      </attribute>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="4" column="0" colspan="2">
-        <widget class="QGroupBox" name="groupBox">
+       <item row="0" column="1">
+        <widget class="QToolButton" name="shortcutAddButton">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Shortcuts allow to duplicate services directly from the plugin icon in the toolbar or from the menu entry.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>Add a new shortcut</string>
          </property>
-         <property name="title">
-          <string>Shortcuts</string>
+         <property name="text">
+          <string>...</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_6">
-          <item row="0" column="1">
-           <widget class="QToolButton" name="shortcutAddButton">
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add a shortcut to the plugin toolbar button and to the menu entry&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="text">
-             <string>...</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QToolButton" name="shortcutRemoveButton">
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove shortcut&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="text">
-             <string>...</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <spacer name="verticalSpacer_4">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="0" column="0" rowspan="3">
-           <widget class="QTableView" name="shortcutsTableView">
-            <property name="selectionMode">
-             <enum>QAbstractItemView::SingleSelection</enum>
-            </property>
-            <property name="selectionBehavior">
-             <enum>QAbstractItemView::SelectRows</enum>
-            </property>
-            <attribute name="verticalHeaderVisible">
-             <bool>false</bool>
-            </attribute>
-           </widget>
-          </item>
-         </layout>
         </widget>
        </item>
-       <item row="0" column="0" colspan="2">
-        <layout class="QGridLayout" name="gridLayout">
-         <property name="sizeConstraint">
-          <enum>QLayout::SetDefaultConstraint</enum>
+       <item row="1" column="1">
+        <widget class="QToolButton" name="shortcutRemoveButton">
+         <property name="toolTip">
+          <string>Remove shortcut</string>
          </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>Source</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Target</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QComboBox" name="cboTargetService">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="editable">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <spacer name="horizontalSpacer_5">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="1" column="0">
-          <widget class="QComboBox" name="cboSourceService">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
-         </item>
-        </layout>
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
        </item>
-       <item row="5" column="0" colspan="2">
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Preferred</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>71</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="2" column="0">
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>354</width>
-           <height>22</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="3" column="0" colspan="2">
-        <spacer name="verticalSpacer_5">
+       <item row="2" column="1">
+        <spacer name="verticalSpacer_4">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -403,29 +150,6 @@
           <size>
            <width>20</width>
            <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="2" column="1">
-        <widget class="QPushButton" name="btnDuplicateService">
-         <property name="text">
-          <string>Duplicate service</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <spacer name="verticalSpacer_6">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>15</height>
           </size>
          </property>
         </spacer>
@@ -587,15 +311,6 @@
   <tabstop>txtConfFile</tabstop>
   <tabstop>btnCreateServiceFile</tabstop>
   <tabstop>tabWidget</tabstop>
-  <tabstop>cboEditService</tabstop>
-  <tabstop>tblServiceConfig</tabstop>
-  <tabstop>btnAddSettings</tabstop>
-  <tabstop>btnRemoveSetting</tabstop>
-  <tabstop>btnCopySettings</tabstop>
-  <tabstop>btnUpdateService</tabstop>
-  <tabstop>btnDuplicateService</tabstop>
-  <tabstop>cboSourceService</tabstop>
-  <tabstop>cboTargetService</tabstop>
   <tabstop>shortcutsTableView</tabstop>
   <tabstop>shortcutAddButton</tabstop>
   <tabstop>shortcutRemoveButton</tabstop>

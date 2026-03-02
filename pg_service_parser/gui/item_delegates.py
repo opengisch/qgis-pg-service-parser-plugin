@@ -93,3 +93,41 @@ class ServiceConfigDelegate(QStyledItemDelegate):
             model.setData(index, value, Qt.ItemDataRole.EditRole)
         else:
             QStyledItemDelegate.setModelData(self, editor, model, index)
+
+
+class ShortcutServiceDelegate(QStyledItemDelegate):
+    """Delegate that shows a combobox with available services for From/To columns."""
+
+    FROM_COL = 1
+    TO_COL = 2
+
+    def __init__(self, service_names_func, parent=None):
+        super().__init__(parent)
+        self.__service_names_func = service_names_func
+
+    def createEditor(self, parent, option, index):
+        if index.column() in (self.FROM_COL, self.TO_COL):
+            widget = QComboBox(parent)
+            widget.addItems([""] + self.__service_names_func())
+            widget.currentIndexChanged.connect(self.__commit_and_close_editor)
+            return widget
+
+        return QStyledItemDelegate.createEditor(self, parent, option, index)
+
+    def __commit_and_close_editor(self):
+        editor = self.sender()
+        self.commitData.emit(editor)
+        self.closeEditor.emit(editor)
+
+    def setEditorData(self, editor, index):
+        if index.column() in (self.FROM_COL, self.TO_COL):
+            value = index.data(Qt.ItemDataRole.DisplayRole)
+            editor.setCurrentText(value or "")
+        else:
+            QStyledItemDelegate.setEditorData(self, editor, index)
+
+    def setModelData(self, editor, model, index):
+        if index.column() in (self.FROM_COL, self.TO_COL):
+            model.setData(index, editor.currentText(), Qt.ItemDataRole.EditRole)
+        else:
+            QStyledItemDelegate.setModelData(self, editor, model, index)
