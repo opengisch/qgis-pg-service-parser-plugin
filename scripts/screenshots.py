@@ -304,6 +304,9 @@ def main():
     dlg.show()
     QApplication.processEvents()
 
+    # Show a realistic Windows path instead of the temp directory
+    dlg.txtConfFile.setText(r"C:\Users\sketcher\AppData\Roaming\postgresql\pg_service.conf")
+
     print("Taking screenshots...")
 
     print("  01 Edit tab...")
