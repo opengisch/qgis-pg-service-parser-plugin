@@ -1,0 +1,57 @@
+site_name: PG Service Parser Plugin
+site_description: QGIS plugin to view, edit or copy pg_service.conf entries for PostgreSQL connections.
+site_author: opengisch
+
+repo_name: opengisch/qgis-pg-service-parser-plugin
+repo_url: https://github.com/opengisch/qgis-pg-service-parser-plugin
+edit_uri: https://github.com/opengisch/qgis-pg-service-parser-plugin/tree/main/docs/docs/
+
+theme:
+  name: "material"
+  logo: assets/images/logo.png
+  favicon: assets/images/logo.png
+  features:
+    - navigation.top
+    - navigation.tracking
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - attr_list
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+nav:
+  - About: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Development: development.md
+
+extra:
+  # Remove "Made with Material for MkDocs" from footer
+  generator: false
