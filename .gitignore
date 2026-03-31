@@ -4,3 +4,4 @@ pg_service_parser/libs/
 __pycache__
 .DS_Store
 .python-version
+docs/site/
