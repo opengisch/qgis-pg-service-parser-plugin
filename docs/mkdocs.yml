@@ -49,7 +49,12 @@ markdown_extensions:
 nav:
   - About: index.md
   - Installation: installation.md
-  - Usage: usage.md
+  - Usage:
+      - usage/index.md
+      - Edit services: usage/edit_services.md
+      - Shortcuts: usage/shortcuts.md
+      - Connections: usage/connections.md
+      - Context actions: usage/context_actions.md
   - Development: development.md
 
 extra:
