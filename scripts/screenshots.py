@@ -255,11 +255,19 @@ def step_context_menu(dlg):
     menu.close()
 
 
-def step_shortcuts_tab(dlg):
-    """Capture the shortcuts tab."""
+def step_shortcuts_tab(dlg, shortcuts_model):
+    """Capture the shortcuts tab with pre-populated shortcuts."""
+    # Add sample shortcuts so the tab isn't empty
+    shortcuts_model.add_shortcut("staging", "production")
+    shortcuts_model.add_shortcut("development", "staging")
+
     dlg.tabWidget.setCurrentIndex(1)
     QApplication.processEvents()
     _grab(dlg, "shortcuts_tab.png")
+
+    # Clean up the shortcuts we just added
+    while shortcuts_model.rowCount():
+        shortcuts_model.remove_shortcut(shortcuts_model.index(0, 0))
 
 
 def step_connections_tab(dlg):
@@ -316,7 +324,7 @@ def main():
     step_context_menu(dlg)
 
     print("  03 Shortcuts tab...")
-    step_shortcuts_tab(dlg)
+    step_shortcuts_tab(dlg, shortcuts_model)
 
     print("  04 Connections tab...")
     step_connections_tab(dlg)
