@@ -18,13 +18,14 @@ Only files whose pixels actually changed are overwritten (diffing guard).
 import configparser
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Bootstrap QGIS
 # ---------------------------------------------------------------------------
 from qgis.core import QgsApplication
-from qgis.PyQt.QtCore import QPoint, Qt
+from qgis.PyQt.QtCore import QPoint, Qt, QTimer
 from qgis.PyQt.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap
 from qgis.PyQt.QtWidgets import QApplication, QMainWindow
 
@@ -48,6 +49,19 @@ MARKER_COLOR = QColor(255, 50, 50, 200)
 MARKER_RADIUS = 18
 MARKER_PEN_WIDTH = 3
 MARKER_CROSSHAIR_LEN = 8
+
+# Connection errors by host, so that the screenshots do not depend on the network
+CONNECTION_ERRORS = {
+    "staging.example.com": (
+        'connection to server at "staging.example.com" (203.0.113.10), port 5433 failed: '
+        "Connection refused\n"
+        "\tIs the server running on that host and accepting TCP/IP connections?"
+    ),
+    "geoserver.partner.org": (
+        'connection to server at "geoserver.partner.org" (198.51.100.7), port 5432 failed: '
+        "timeout expired"
+    ),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +110,7 @@ def _images_differ(path: Path, new_pixmap: QPixmap) -> bool:
     return False
 
 
-def _grab(widget, filename: str, click_targets: list[QPoint] | None = None):
+def _grab(widget, filename: str, click_targets: list[QPoint] | None = None, popups=None):
     """Grab a screenshot of *widget* and save it (only if changed).
 
     Args:
@@ -104,10 +118,18 @@ def _grab(widget, filename: str, click_targets: list[QPoint] | None = None):
         filename: File name (e.g. "edit_tab.png").
         click_targets: Optional list of QPoint positions where a click-marker
             circle should be drawn.
+        popups: Optional list of popup widgets (e.g. menus) to draw over *widget*,
+            as they are separate windows not included in its grab.
     """
     QApplication.processEvents()
 
     pixmap: QPixmap = widget.grab()
+
+    if popups:
+        painter = QPainter(pixmap)
+        for popup in popups:
+            painter.drawPixmap(widget.mapFromGlobal(popup.mapToGlobal(QPoint(0, 0))), popup.grab())
+        painter.end()
 
     if click_targets:
         painter = QPainter(pixmap)
@@ -136,6 +158,35 @@ def _widget_center_in(widget, ancestor) -> QPoint:
     """Return the center of *widget* mapped to *ancestor*'s coordinate system."""
     local_center = QPoint(widget.width() // 2, widget.height() // 2)
     return widget.mapTo(ancestor, local_center)
+
+
+def _wait_for(condition, timeout: float = 30):
+    """Process events until *condition* returns True."""
+    deadline = time.monotonic() + timeout
+    while not condition():
+        if time.monotonic() > deadline:
+            raise TimeoutError(f"{condition} still False after {timeout}s")
+        QApplication.processEvents()
+        time.sleep(0.05)
+
+
+def _grab_modal_and_click(filename: str, button_text: str):
+    """Once the next modal dialog is shown, grab it and click one of its buttons."""
+
+    def grab_and_click():
+        dialog = QApplication.activeModalWidget()
+        _grab(dialog, filename)
+        next(button for button in dialog.buttons() if button.text() == button_text).click()
+
+    QTimer.singleShot(200, grab_and_click)
+
+
+def _fake_connection_error(params: dict) -> str | None:
+    """Connection test returning the errors of CONNECTION_ERRORS."""
+    from pg_service_parser.libs.pgserviceparser import service_config
+
+    host = params.get("host") or service_config(params["service"])["host"]
+    return CONNECTION_ERRORS.get(host)
 
 
 def _create_sample_conf(conf_path: Path):
@@ -251,7 +302,7 @@ def step_context_menu(dlg):
     QApplication.processEvents()
 
     # Grab the dialog with the menu overlaid
-    _grab(dlg, "context_menu.png")
+    _grab(dlg, "context_menu.png", popups=[menu])
     menu.close()
 
 
@@ -277,6 +328,73 @@ def step_connections_tab(dlg):
     _grab(dlg, "connections_tab.png")
 
 
+def step_test_services(dlg):
+    """Capture the test dialog listing the services that could not be connected."""
+    from pg_service_parser.gui.dlg_service_test import ServiceTestDialog
+    from pg_service_parser.libs.pgserviceparser import service_names
+
+    dlg.tabWidget.setCurrentIndex(0)
+    widget = dlg._PgServiceDialog__service_widget
+
+    test_dlg = ServiceTestDialog(widget, service_names())
+    test_dlg.show()
+    _wait_for(test_dlg.progressBar.isHidden)
+    _grab(test_dlg, "test_services.png")
+    test_dlg.close()
+
+
+def step_remove_services(dlg):
+    """Disable services and capture the question asked when removing a service."""
+    from pg_service_parser.gui.remove_services import RemoveAction
+    from pg_service_parser.libs.pgserviceparser import create_service
+
+    widget = dlg._PgServiceDialog__service_widget
+
+    # Disable the services that failed the test
+    widget._remove_services(["external_wfs", "staging"], RemoveAction.DISABLE)
+
+    # Remove a service from the main dialog: grab the question and disable it
+    widget.lstServices.setCurrentItem(
+        widget.lstServices.findItems("sketches", Qt.MatchFlag.MatchExactly)[0]
+    )
+    _grab_modal_and_click("remove_services.png", "Disable (comment out)")
+    widget._remove_service_clicked()
+
+    # A new service with the same name is created, so that the disabled one cannot be restored
+    create_service(
+        "sketches",
+        {"host": "localhost", "port": "5432", "dbname": "sketches_2026", "user": "sketcher"},
+    )
+    widget._refresh_service_list()
+
+
+def step_disabled_services(dlg):
+    """Capture the edit tab with the button to restore the disabled services."""
+    widget = dlg._PgServiceDialog__service_widget
+
+    dlg.bar.clearWidgets()
+    widget.lstServices.setCurrentItem(
+        widget.lstServices.findItems("production", Qt.MatchFlag.MatchExactly)[0]
+    )
+    QApplication.processEvents()
+    _grab(dlg, "disabled_services.png")
+
+
+def step_restore_services(dlg):
+    """Capture the restore dialog, once the disabled services are tested."""
+    from pg_service_parser.gui.dlg_service_restore import ServiceRestoreDialog
+
+    # The partner server is back online
+    del CONNECTION_ERRORS["geoserver.partner.org"]
+
+    widget = dlg._PgServiceDialog__service_widget
+    restore_dlg = ServiceRestoreDialog(widget, widget._conf_file_path)
+    restore_dlg.show()
+    _wait_for(restore_dlg.progressBar.isHidden)
+    _grab(restore_dlg, "restore_services.png")
+    restore_dlg.close()
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -296,9 +414,14 @@ def main():
     os.environ["PGSERVICEFILE"] = str(conf_file)
 
     # Import plugin modules (after env is set)
+    from pg_service_parser.core import service_tester
     from pg_service_parser.core.copy_shortcuts import ShortcutsModel
     from pg_service_parser.gui.dlg_pg_service import PgServiceDialog
     from pg_service_parser.libs.pgserviceparser import conf_path, service_names
+
+    # Fake the connection test (psycopg is then not needed)
+    service_tester.connection_error = _fake_connection_error
+    service_tester.psycopg = True
 
     iface = _FakeIface()
 
@@ -328,6 +451,18 @@ def main():
 
     print("  04 Connections tab...")
     step_connections_tab(dlg)
+
+    print("  05 Test services...")
+    step_test_services(dlg)
+
+    print("  06 Remove services...")
+    step_remove_services(dlg)
+
+    print("  07 Disabled services...")
+    step_disabled_services(dlg)
+
+    print("  08 Restore services...")
+    step_restore_services(dlg)
 
     dlg.close()
 

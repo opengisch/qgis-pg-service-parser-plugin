@@ -18,10 +18,13 @@ from qgis.PyQt.QtWidgets import (
     QComboBox,
     QCompleter,
     QDialog,
+    QHBoxLayout,
     QHeaderView,
     QMenu,
     QMessageBox,
+    QPushButton,
     QSizePolicy,
+    QToolButton,
 )
 
 from pg_service_parser.conf.service_settings import SERVICE_SETTINGS, SETTINGS_TEMPLATE
@@ -35,19 +38,26 @@ from pg_service_parser.core.service_connections import (
     remove_connection,
     rename_service_in_connections,
 )
+from pg_service_parser.core.service_tester import psycopg_available
 from pg_service_parser.core.setting_model import ServiceConfigModel
 from pg_service_parser.gui.dlg_new_name import EnumNewName, NewNameDialog
+from pg_service_parser.gui.dlg_service_restore import ServiceRestoreDialog
 from pg_service_parser.gui.dlg_service_settings import ServiceSettingsDialog
+from pg_service_parser.gui.dlg_service_test import ServiceTestDialog
 from pg_service_parser.gui.item_delegates import (
     ServiceConfigDelegate,
     ShortcutServiceDelegate,
 )
+from pg_service_parser.gui.remove_services import RemoveAction, ask_remove_action
 from pg_service_parser.libs.pgserviceparser import (
     ConfPathSource,
     conf_path,
     conf_path_source,
     copy_service_settings,
     create_service,
+    disable_service,
+    disabled_service_names,
+    enable_service,
     remove_service,
     rename_service,
     service_config,
@@ -55,6 +65,7 @@ from pg_service_parser.libs.pgserviceparser import (
     write_service,
     write_service_to_text,
 )
+from pg_service_parser.libs.pgserviceparser.exceptions import ServiceFileNotFound
 from pg_service_parser.libs.pgserviceparser.gui.service_widget import (
     PGServiceParserWidget,
 )
@@ -98,6 +109,34 @@ class _QgisServiceWidget(PGServiceParserWidget):
         self.btnRemoveSetting.setText("")
         self.btnCopySettings.setIcon(QgsApplication.getThemeIcon("/mActionEditCopy.svg"))
         self.btnCopySettings.setText("")
+        # Test button in the bottom left corner, below the service list
+        self.btnTestServices = QPushButton(
+            QgsApplication.getThemeIcon("/mIconConnect.svg"), self.tr("Test services")
+        )
+        self.btnTestServices.setToolTip(self.tr("Test the connection to all services"))
+        # Restore button next to it, shown when some services are disabled
+        self.btnRestoreServices = QToolButton()
+        self.btnRestoreServices.setIcon(QgsApplication.getThemeIcon("/mActionUndo.svg"))
+        self.btnRestoreServices.hide()
+        test_layout = QHBoxLayout(self._left_bottom_spacer)
+        test_layout.setContentsMargins(0, 0, 0, 0)
+        test_layout.addWidget(self.btnTestServices)
+        test_layout.addStretch()
+        test_layout.addWidget(self.btnRestoreServices)
+
+    def _connect_signals(self):
+        super()._connect_signals()
+        self.btnTestServices.clicked.connect(self._test_services_clicked)
+        self.btnRestoreServices.clicked.connect(self._restore_services_clicked)
+
+    def _refresh_service_list(self):
+        super()._refresh_service_list()
+        try:
+            count = len(disabled_service_names(self._conf_file_path))
+        except ServiceFileNotFound:
+            count = 0
+        self.btnRestoreServices.setVisible(count > 0)
+        self.btnRestoreServices.setToolTip(self.tr("Restore disabled services ({})").format(count))
 
     # -- Name input: use NewNameDialog instead of QInputDialog --
 
@@ -131,38 +170,47 @@ class _QgisServiceWidget(PGServiceParserWidget):
             return
 
         names = [item.text() for item in selected_items]
-        if len(names) == 1:
-            message = self.tr("Are you sure you want to remove the service '{}'?").format(names[0])
-        else:
-            message = self.tr("Are you sure you want to remove {} services?\n\n{}").format(
-                len(names), "\n".join(names)
-            )
+        if action := ask_remove_action(self, names):
+            self._remove_services(names, action)
 
-        if (
-            QMessageBox.question(
-                self,
-                self.tr("Remove service(s)"),
-                message,
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No,
-            )
-            == QMessageBox.StandardButton.Yes
-        ):
-            for name in names:
-                try:
+    def _remove_services(self, names, action):
+        try:
+            if action == RemoveAction.DISABLE:
+                for name in names:
+                    disable_service(name, self._conf_file_path)
+                message = self.tr("{} service(s) disabled (commented out).").format(len(names))
+            else:
+                for name in names:
                     remove_service(name, self._conf_file_path)
-                except PermissionError:
-                    self._permission_warning()
-                    return
+                message = self.tr("{} service(s) removed.").format(len(names))
+        except PermissionError:
+            self._permission_warning()
+        else:
+            self._bar.pushSuccess(self.tr("PG service"), message)
 
+        self._edit_model = None
+        self.tblServiceConfig.setModel(None)
+        self._set_edit_panel_enabled(False)
+        self._refresh_service_list()
+
+    @pyqtSlot()
+    def _restore_services_clicked(self):
+        dlg = ServiceRestoreDialog(self, self._conf_file_path)
+        dlg.exec()
+        if not dlg.services_to_restore:
+            return
+
+        try:
+            for name in dlg.services_to_restore:
+                enable_service(name, self._conf_file_path)
+        except PermissionError:
+            self._permission_warning()
+        else:
             self._bar.pushSuccess(
                 self.tr("PG service"),
-                self.tr("{} service(s) removed.").format(len(names)),
+                self.tr("{} service(s) restored.").format(len(dlg.services_to_restore)),
             )
-            self._edit_model = None
-            self.tblServiceConfig.setModel(None)
-            self._set_edit_panel_enabled(False)
-            self._refresh_service_list()
+        self._refresh_service_list()
 
     def _rename_service(self, old_name):
         dlg = NewNameDialog(EnumNewName.SERVICE, self)
@@ -188,6 +236,24 @@ class _QgisServiceWidget(PGServiceParserWidget):
                 if items:
                     self.lstServices.setCurrentItem(items[0])
                 self.service_renamed.emit(old_name, new_name)
+
+    @pyqtSlot()
+    def _test_services_clicked(self):
+        if not psycopg_available():
+            self._bar.pushWarning(
+                self.tr("PG service"),
+                self.tr("Testing services requires the psycopg or psycopg2 Python package."),
+            )
+            return
+
+        names = service_names(self._conf_file_path)
+        if not names:
+            return
+
+        dlg = ServiceTestDialog(self, names)
+        dlg.exec()
+        if dlg.services_to_remove:
+            self._remove_services(dlg.services_to_remove, dlg.remove_action)
 
     def _duplicate_and_edit_service(self, source_service_name):
         dlg = NewNameDialog(EnumNewName.SERVICE, self)
