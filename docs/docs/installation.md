@@ -9,9 +9,13 @@ The plugin is available from the official QGIS plugin repository. In QGIS, go to
 If your `pg_service.conf` file is located at one of the default locations, the plugin will find it automatically:
 
 - **Linux**: `/home/YOUR_USER/.pg_service.conf`
+- **macOS**: `/Users/YOUR_USER/.pg_service.conf`
 - **Windows**: `%APPDATA%\postgresql\.pg_service.conf`
 
-If your file is elsewhere, set the `PGSERVICEFILE` environment variable pointing to your file path before opening the plugin.
+If your file is elsewhere, set the `PGSERVICEFILE` environment variable pointing to your file path, either on your system or in QGIS under **Settings > Options > System > Environment**, and restart QGIS.
+If `PGSERVICEFILE` is not set, the `pg_service.conf` file in the directory given by the `PGSYSCONFDIR` environment variable is used.
+
+The path currently in use is shown at the top of the plugin dialog. Hover the info icon next to it to see how it was determined.
 
 Clients like QGIS will directly read your `pg_service.conf` file from any of these locations and you'll be able to use any service from this file in the **New Connection** dialog (see [QGIS docs](https://docs.qgis.org/latest/en/docs/user_manual/managing_data_source/opening_data.html#creating-a-stored-connection)).
 

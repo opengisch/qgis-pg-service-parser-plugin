@@ -56,7 +56,7 @@
         <string notr="true"/>
        </property>
        <property name="text">
-        <string>Config file path found at </string>
+        <string>Current config file path</string>
        </property>
       </widget>
      </item>
@@ -64,6 +64,19 @@
       <widget class="QLineEdit" name="txtConfFile">
        <property name="readOnly">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblConfFileInfo">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string/>
        </property>
       </widget>
      </item>

@@ -1,3 +1,5 @@
+import html
+
 from qgis.core import QgsApplication
 from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import (
@@ -41,7 +43,9 @@ from pg_service_parser.gui.item_delegates import (
     ShortcutServiceDelegate,
 )
 from pg_service_parser.libs.pgserviceparser import (
+    ConfPathSource,
     conf_path,
+    conf_path_source,
     copy_service_settings,
     create_service,
     remove_service,
@@ -370,6 +374,11 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.__initialize_dialog()
 
     def __initialize_dialog(self):
+        self.lblConfFileInfo.setPixmap(
+            QgsApplication.getThemeIcon("/propertyicons/metadata.svg").pixmap(16, 16)
+        )
+        self.lblConfFileInfo.setToolTip(self.__conf_file_info_tooltip())
+
         if not self.__conf_file_path.exists():
             self.btnCreateServiceFile.setIcon(QgsApplication.getThemeIcon("/mActionNewPage.svg"))
             self.btnCreateServiceFile.clicked.connect(self.__create_file_clicked)
@@ -395,7 +404,7 @@ class PgServiceDialog(QDialog, DIALOG_UI):
         self.shortcutRemoveButton.setIcon(QgsApplication.getThemeIcon("/symbologyRemove.svg"))
         self.txtConfFile.setText(str(self.__conf_file_path))
         self.lblWarning.setVisible(False)
-        self.lblConfFile.setText(self.tr("Config file path found at "))
+        self.lblConfFile.setText(self.tr("Current config file path"))
         self.lblConfFile.setToolTip("")
         self.txtConfFile.setVisible(True)
         self.tabWidget.setEnabled(True)
@@ -433,6 +442,27 @@ class PgServiceDialog(QDialog, DIALOG_UI):
 
         self.__initialize_shortcuts()
         self.__initialize_connection_services()
+
+    def __conf_file_info_tooltip(self) -> str:
+        source = conf_path_source()
+        if source == ConfPathSource.PGSERVICEFILE:
+            origin = self.tr("This path is set by the <b>PGSERVICEFILE</b> environment variable.")
+        elif source == ConfPathSource.PGSYSCONFDIR:
+            origin = self.tr(
+                "This path is <tt>pg_service.conf</tt> in the directory set by the "
+                "<b>PGSYSCONFDIR</b> environment variable."
+            )
+        else:
+            origin = self.tr(
+                "This is the default location, as neither the <b>PGSERVICEFILE</b> "
+                "nor the <b>PGSYSCONFDIR</b> environment variable is set."
+            )
+        change = self.tr(
+            "To use another file, set the <b>PGSERVICEFILE</b> environment variable to its path, "
+            "either on your system or in QGIS under <i>Settings > Options > System > Environment</i>, "
+            "and restart QGIS."
+        )
+        return f"<p><tt>{html.escape(str(self.__conf_file_path))}</tt></p><p>{origin}</p><p>{change}</p>"
 
     @pyqtSlot()
     def __create_file_clicked(self):
