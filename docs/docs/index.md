@@ -5,7 +5,7 @@
 
 QGIS plugin to **view**, **edit** or **copy** PG service (i.e., `pg_service.conf`) entries for PostgreSQL connections.
 
-This plugin is built on top of [pgserviceparser](https://github.com/opengisch/pgserviceparser), a standalone Python library (available on [PyPI](https://pypi.org/project/pgserviceparser/)) for reading, writing, and managing PostgreSQL service files. The library also provides its own GUI module that can be used independently of QGIS.
+This plugin is built on top of [pgserviceparser](https://opengisch.github.io/pgserviceparser/), a standalone Python library (available on [PyPI](https://pypi.org/project/pgserviceparser/)) for reading, writing, and managing PostgreSQL service files. The library also provides its own GUI module that can be used independently of QGIS.
 
 ## Features
 
