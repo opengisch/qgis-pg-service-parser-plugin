@@ -1,3 +1,4 @@
+import configparser
 import html
 
 from qgis.core import QgsApplication
@@ -456,6 +457,18 @@ class PgServiceDialog(QDialog, DIALOG_UI):
             self.lblConfFile.setToolTip(not_found_tooltip)
             self.lblWarning.setToolTip(not_found_tooltip)
             self.txtConfFile.setVisible(False)
+            self.tabWidget.setEnabled(False)
+            return
+
+        try:
+            service_names(self.__conf_file_path)
+        except configparser.Error as e:
+            self.txtConfFile.setText(str(self.__conf_file_path))
+            self.btnCreateServiceFile.setVisible(False)
+            self.lblConfFile.setText(self.tr("Config file is malformed!"))
+            malformed_tooltip = self.tr("Fix the file and reopen the dialog.\n\n{}").format(e)
+            self.lblConfFile.setToolTip(malformed_tooltip)
+            self.lblWarning.setToolTip(malformed_tooltip)
             self.tabWidget.setEnabled(False)
             return
 
