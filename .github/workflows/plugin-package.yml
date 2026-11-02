@@ -36,7 +36,8 @@ jobs:
           sudo apt-get install qtbase5-dev qttools5-dev-tools
 
       - name: Install qgis-plugin-ci
-        run: pip install qgis-plugin-ci>=2.8.6
+        # 2.11.0 auto-approves the release when uploading with a QGIS token
+        run: pip install "qgis-plugin-ci>=2.11.0"
 
       - name: 🌍 Push translations
         if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/') }}
@@ -93,6 +94,5 @@ jobs:
             --asset-path pg_service_parser/LICENSE \
             --asset-path pg_service_parser/libs \
             --github-token ${{ secrets.GITHUB_TOKEN }} \
-            --osgeo-username ${{ secrets.OSGEO_PLUGIN_USERNAME }} \
-            --osgeo-password ${{ secrets.OSGEO_PLUGIN_PASSWORD }} \
+            --qgis-token ${{ secrets.QGIS_ORG_TOKEN }} \
             --transifex-token "${{ secrets.TX_TOKEN }}"
