@@ -1,3 +1,4 @@
+import configparser
 import os
 from pathlib import Path
 
@@ -118,7 +119,11 @@ class PgServiceParserPlugin:
         button_menu.addAction(self.default_action)
 
         if len(self.shortcuts_model.shortcuts):
-            _services = service_names(_conf_path)
+            try:
+                _services = service_names(_conf_path)
+            except configparser.Error:
+                # Malformed service file: shortcuts are disabled
+                _services = []
             self.button.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
             button_menu.addSeparator()
             for shortcut in self.shortcuts_model.shortcuts:
@@ -172,11 +177,21 @@ class PgServiceParserPlugin:
     def copy_service(self, service_from: str, service_to: str):
         _conf_path = conf_path()
         if _conf_path.exists():
-            copy_service_settings(service_from, service_to, _conf_path)
+            try:
+                copy_service_settings(service_from, service_to, _conf_path)
+            except configparser.Error as e:
+                self.malformed_file_warning(e)
+                return
             self.iface.messageBar().pushMessage(
                 self.tr("PG service"),
                 self.tr("PG service copied from '{}' to '{}'!").format(service_from, service_to),
             )
+
+    def malformed_file_warning(self, error: configparser.Error):
+        self.iface.messageBar().pushWarning(
+            self.tr("PG service"),
+            self.tr("The service file is malformed: {}").format(error),
+        )
 
     def current_layer_changed(self, layer):
         is_postgres = layer is not None and layer.providerType() == "postgres"
@@ -231,7 +246,13 @@ class PgServiceParserPlugin:
         if uri.sslMode() != QgsDataSourceUri.SslMode.SslPrefer:
             settings["sslmode"] = QgsDataSourceUri.encodeSslMode(uri.sslMode())
 
-        if create_service(name, settings):
+        try:
+            created = create_service(name, settings)
+        except configparser.Error as e:
+            self.malformed_file_warning(e)
+            return
+
+        if created:
             self.open(name)
         else:
             self.iface.messageBar().pushMessage(
@@ -262,7 +283,13 @@ class PgServiceParserPlugin:
         final_data_source = source
         final_service = ""
 
-        for name in service_names():
+        try:
+            names = service_names()
+        except configparser.Error as e:
+            self.malformed_file_warning(e)
+            return
+
+        for name in names:
             # remove everything that matches the service and keep the shortest uri
 
             uri = QgsDataSourceUri(source)
