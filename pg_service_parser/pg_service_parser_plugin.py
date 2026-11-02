@@ -58,7 +58,11 @@ class PgServiceParserPlugin:
         self.default_action.triggered.connect(self.run)
 
         self.iface.addPluginToDatabaseMenu(self.tr("PG service parser"), self.default_action)
-        self.menu = self.iface.mainWindow().getDatabaseMenu(self.tr("PG service parser"))
+        self.menu = next(
+            action.menu()
+            for action in self.iface.databaseMenu().actions()
+            if action.menu() and self.default_action in action.menu().actions()
+        )
         self.menu.setIcon(icon)
         self.menu.setToolTipsVisible(True)
 
